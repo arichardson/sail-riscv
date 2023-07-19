@@ -127,6 +127,9 @@ val plat_mtval_has_illegal_inst_bits = pure {interpreter: "Platform.mtval_has_il
                                              c: "plat_mtval_has_illegal_inst_bits",
                                              lem: "plat_mtval_has_illegal_inst_bits"} : unit -> bool
 
+/* whether compressed hint instructions are executed as their 32-bit nop encoding */
+function plat_c_hints_expand () -> bool = true
+
 /* ROM holding reset vector and device-tree DTB */
 val plat_rom_base   = pure {interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> physaddrbits
 val plat_rom_size   = pure {interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> physaddrbits
