@@ -192,6 +192,25 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
   }
 }
 
+$ifdef RVFI_DII
+val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
+function rvfi_read (addr, width, result) = {
+  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+  rvfi_mem_data_present = true;
+  match result {
+    /* TODO: report tag bit for capability writes and extend mask by one bit. */
+    Ok(v, _) => if width <= 16
+               then { rvfi_mem_data[rvfi_mem_rdata] = sail_zero_extend(v, 256);
+                      rvfi_mem_data[rvfi_mem_rmask] = rvfi_encode_width_mask(width) }
+               else { internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!") },
+    Err(_) => ()
+  };
+}
+$else
+val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
+function rvfi_read (addr, width, result) = ()
+$endif
+
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
 function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   typ : AccessType(ext_access_type),
@@ -203,24 +222,28 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
   rl : bool,
   res: bool,
   meta : bool,
-) -> MemoryOpResult((bits(8 * 'n), mem_meta)) =
-  if (aq | res) & not(is_aligned_addr(paddr, width))
-  then Err(E_Load_Addr_Align())
-  else match (aq, rl, res) {
-    (false, true,  false) => throw(Error_not_implemented("load.rl")),
-    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
-    _ => match phys_access_check(typ, priv, pbmt, paddr, width, res) {
-      Some(e) => Err(e),
-      None() => {
-        if  within_mmio_readable(paddr, width)
-        then MemoryOpResult_add_meta(mmio_read(typ, paddr, width), default_meta)
-        else match ext_check_phys_mem_read(typ, paddr, width, aq, rl, res, meta) {
-          Ext_PhysAddr_OK()     => phys_mem_read(typ, paddr, width, aq, rl, res, meta),
-          Ext_PhysAddr_Error(e) => Err(e)
+) -> MemoryOpResult((bits(8 * 'n), mem_meta)) = {
+  let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
+    if (aq | res) & not(is_aligned_addr(paddr, width))
+    then Err(E_Load_Addr_Align())
+    else match (aq, rl, res) {
+      (false, true,  false) => throw(Error_not_implemented("load.rl")),
+      (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+      _ => match phys_access_check(typ, priv, pbmt, paddr, width, res) {
+        Some(e) => Err(e),
+        None() => {
+          if  within_mmio_readable(paddr, width)
+          then MemoryOpResult_add_meta(mmio_read(typ, paddr, width), default_meta)
+          else match ext_check_phys_mem_read(typ, paddr, width, aq, rl, res, meta) {
+            Ext_PhysAddr_OK()     => phys_mem_read(typ, paddr, width, aq, rl, res, meta),
+            Ext_PhysAddr_Error(e) => Err(e)
+          }
         }
-      }
-    },
-  }
+      },
+    };
+  rvfi_read(physaddr_bits(paddr), width, result);
+  result
+}
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
@@ -250,6 +273,28 @@ function mem_write_ea (addr, width, aq, rl, con) =
   then Err(E_SAMO_Addr_Align())
   else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
 
+$ifdef RVFI_DII
+val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
+function rvfi_write (addr, width, value, meta, result) = {
+  rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+  rvfi_mem_data_present = true;
+  match result {
+    /* Log only the memory address (without the value) if the write fails. */
+    Ok(_) => if width <= 16 then {
+        /* TODO: report tag bit for capability writes and extend mask by one bit. */
+        rvfi_mem_data[rvfi_mem_wdata] = sail_zero_extend(value,256);
+        rvfi_mem_data[rvfi_mem_wmask] = rvfi_encode_width_mask(width);
+      } else {
+        internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
+      },
+    Err(_) => ()
+  }
+}
+$else
+val rvfi_write : forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
+function rvfi_write (addr, width, value, meta, result) = ()
+$endif
+
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
   if platform_get_rvfi_dii() & out_of_rvfi_dii_range(physaddr_bits(paddr), width)
@@ -274,23 +319,27 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
   rl : bool,
   con : bool,
   meta : mem_meta,
-) -> MemoryOpResult(bool) =
-  if (rl | con) & not(is_aligned_addr(paddr, width))
-  then Err(E_SAMO_Addr_Align())
-  else match phys_access_check(typ, priv, pbmt, paddr, width, con) {
-    Some(e) => Err(e),
-    None() => {
-      if within_mmio_writable(paddr, width)
-      then mmio_write(paddr, width, data)
-      else {
-        let wk = write_kind_of_flags(aq, rl, con);
-        match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
-          Ext_PhysAddr_OK()      => phys_mem_write(wk, paddr, width, data, meta),
-          Ext_PhysAddr_Error(e)  => Err(e)
+) -> MemoryOpResult(bool) = {
+  let result : MemoryOpResult(bool) =
+    if (rl | con) & not(is_aligned_addr(paddr, width))
+    then Err(E_SAMO_Addr_Align())
+    else match phys_access_check(typ, priv, pbmt, paddr, width, con) {
+      Some(e) => Err(e),
+      None() => {
+        if within_mmio_writable(paddr, width)
+        then mmio_write(paddr, width, data)
+        else {
+          let wk = write_kind_of_flags(aq, rl, con);
+          match ext_check_phys_mem_write (wk, paddr, width, data, meta) {
+            Ext_PhysAddr_OK()      => phys_mem_write(wk, paddr, width, data, meta),
+            Ext_PhysAddr_Error(e)  => Err(e)
+          }
         }
       }
-    }
-  }
+    };
+  rvfi_write(physaddr_bits(paddr), width, data, meta, result);
+  result
+}
 
 /* Atomic accesses can be done to MMIO regions, e.g. in kernel access to device registers. */
 
