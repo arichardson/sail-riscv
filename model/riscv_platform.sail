@@ -520,4 +520,4 @@ function platform_get_rvfi_dii() -> bool = false
 $endif
 
 function out_of_rvfi_dii_range forall 'n, 0 < 'n <= max_mem_access . (paddr : xlenbits, width : int('n)) -> bool =
-  unsigned(paddr) < unsigned(0x80000000) | unsigned(paddr + width) > unsigned(0x80800000)
+  unsigned(paddr) < unsigned(0x80000000) | unsigned(paddr) + width > unsigned(0x80800000)
