@@ -202,10 +202,10 @@ foreach (xlen IN ITEMS 32 64)
             )
 
             if (variant STREQUAL "rvfi")
-                set(riscv_step_ext "riscv_step_rvfi.sail")
+                set(riscv_step_ext "cheri/cheri_step_ext.sail" "riscv_step_rvfi.sail")
                 set(riscv_fetch "riscv_fetch_rvfi.sail")
             else()
-                set(riscv_step_ext "cheri/cheri_step_ext.sail")
+                set(riscv_step_ext "cheri/cheri_step_ext.sail" "cheri/cheri_step_ext_nonrvfi.sail")
                 set(riscv_fetch "riscv_fetch.sail")
             endif()
 
