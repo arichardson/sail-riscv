@@ -74,6 +74,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
     None()   => None()
   }) : option((bits(8 * 'n), mem_meta));
+  let result : option((bits(8 * 'n), mem_meta)) = if platform_get_rvfi_dii() & out_of_rvfi_dii_range(physaddr_bits(paddr), width) then None() else result;
   match (t, result) {
     (Execute(),  None()) => Err(E_Fetch_Access_Fault()),
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
@@ -251,10 +252,14 @@ function mem_write_ea (addr, width, aq, rl, con) =
 
 // only used for actual memory regions, to avoid MMIO effects
 function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
-  let result = write_ram(wk, paddr, width, data, meta);
-  if   get_config_print_mem()
-  then print_mem("mem[" ^ BitStr(physaddr_bits(paddr)) ^ "] <- " ^ BitStr(data));
-  Ok(result)
+  if platform_get_rvfi_dii() & out_of_rvfi_dii_range(physaddr_bits(paddr), width)
+  then Err(E_SAMO_Access_Fault())
+  else {
+    let result = write_ram(wk, paddr, width, data, meta);
+    if   get_config_print_mem()
+    then print_mem("mem[" ^ BitStr(physaddr_bits(paddr)) ^ "] <- " ^ BitStr(data));
+    Ok(result)
+  }
 }
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
