@@ -224,7 +224,7 @@ function ext_check_CSR (csrno : bits(12), p : Privilege, isWrite : bool, op : cs
 function ext_check_CSR_fail (fail_type : ext_csr_exc_type) -> unit = {
   match fail_type {
     CHERIPermExc => handle_cheri_exception(CapCheckType_Inst, CapEx_PermissionViolation, Virtaddr(zeros())),
-    IllegalInstruction => handle_illegal(),
+    IllegalInstruction => handle_illegal(zeros()),
   };
 }
 

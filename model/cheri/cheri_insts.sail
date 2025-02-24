@@ -44,14 +44,11 @@ function clause execute(JAL_capmode(imm, cd)) = {
   let off : xlenbits = sign_extend(imm);
   let newPC = PC + off;
   if not(validAddr(newPC) | capBoundsInfinite(PCC)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, Virtaddr(zeros()));
-    RETIRE_FAIL
+    RETIRE_FAIL(CHERI_Exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, Virtaddr(zeros())))
   } else if not(inCapBounds(PCC, newPC, min_instruction_bytes())) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros()));
-    RETIRE_FAIL
+    RETIRE_FAIL(CHERI_Exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros())))
   } else if newPC[1] == bitone & not(currentlyEnabled(Ext_Zca)) then {
-    handle_mem_exception(Virtaddr(newPC), E_Fetch_Addr_Align());
-    RETIRE_FAIL
+    RETIRE_FAIL(Memory_Exception(Virtaddr(newPC), E_Fetch_Addr_Align()))
   } else {
     let (success, linkCap) = setCapAddr(PCC, nextPC); /* Note that nextPC accounts for compressed instructions */
     assert(success, "Link cap should always be representable.");
@@ -85,23 +82,17 @@ function clause execute(JALR_capmode(imm, cs1, cd)) = {
   let newPC = [cs1_val.address + off with 0 = bitzero]; /* clear bit zero as for RISCV JALR */
 
   if not(capTaggedAndReservedValid(cs1_val)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_TagViolation, Virtaddr(zeros()));
-    RETIRE_FAIL
+    RETIRE_FAIL(CHERI_Exception(CapCheckType_JBr, CapEx_TagViolation, Virtaddr(zeros())))
   } else if capIsSealed(cs1_val) & imm != zeros() then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_SealViolation, Virtaddr(zeros()));
-    RETIRE_FAIL
+    RETIRE_FAIL(CHERI_Exception(CapCheckType_JBr, CapEx_SealViolation, Virtaddr(zeros())))
   } else if not(canX(cs1_val)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_PermissionViolation, Virtaddr(zeros()));
-    RETIRE_FAIL
+    RETIRE_FAIL(CHERI_Exception(CapCheckType_JBr, CapEx_PermissionViolation, Virtaddr(zeros())))
   } else if not(validAddr(newPC) | capBoundsInfinite(cs1_val)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, Virtaddr(zeros()));
-    RETIRE_FAIL
+    RETIRE_FAIL(CHERI_Exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, Virtaddr(zeros())))
   } else if not(inCapBounds(cs1_val, newPC, min_instruction_bytes())) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros()));
-    RETIRE_FAIL
+    RETIRE_FAIL(CHERI_Exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros())))
   } else if newPC[1] == bitone & not(currentlyEnabled(Ext_Zca)) then {
-    handle_mem_exception(Virtaddr(newPC), E_Fetch_Addr_Align());
-    RETIRE_FAIL
+    RETIRE_FAIL(Memory_Exception(Virtaddr(newPC), E_Fetch_Addr_Align()))
   } else {
     let (success, linkCap) = setCapAddr(PCC, nextPC); /* Note that nextPC accounts for compressed instructions */
     assert(success, "Link cap should always be representable.");
@@ -658,21 +649,19 @@ function cap_mem_access_exception(auth_val : Capability, Virtaddr(vaddr) : virta
   }
 }
 
-function cap_mem_standard_errors(auth_val : Capability, vaddr : virtaddr, acc_type : CapAccessType) -> option(Retired) = {
+function cap_mem_standard_errors(auth_val : Capability, vaddr : virtaddr, acc_type : CapAccessType) -> option(Retired(Retire_Failure)) = {
   match cap_mem_access_exception(auth_val, vaddr, acc_type) {
     Some(e) => {
-      handle_cheri_exception(CapCheckType_Data, e, vaddr);
-      Some(RETIRE_FAIL)
+      Some(RETIRE_FAIL(CHERI_Exception(CapCheckType_Data, e, vaddr)))
     },
     None() => {
       // All loads and stores of capabilities must be aligned.
       if not(is_aligned_addr(vaddr, cap_size)) then {
-        handle_mem_exception(vaddr, match acc_type {
+        Some(RETIRE_FAIL(Memory_Exception(vaddr, match acc_type {
           Cap_Read => E_Load_Addr_Align(),
           Cap_Write => E_SAMO_Addr_Align(),
           Cap_ReadWrite => E_SAMO_Addr_Align(),
-        });
-        Some(RETIRE_FAIL)
+        })))
       } else {
         None()
       }
@@ -710,14 +699,13 @@ function clause execute (LoadResCap(cd, rs1_cs1, aq, rl)) = {
       // If we don't have C capability then the tag will always be cleared and
       // it is treated as an untagged load.
       match translateAddr(vaddr, Read(if canC(auth_val) then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+        TR_Failure(e, ext_ptw)          => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
         TR_Address(addr, pbmt, ext_ptw) => {
           let c = mem_read_cap(Read(Data), addr, pbmt, aq, aq & rl, true);
           match c {
             Ok(v) => {
               if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
-                handle_translate_exception(vaddr, E_Load_Page_Fault(), { ext_ptw with cheri_page_fault = PageFault_Cheri });
-                RETIRE_FAIL
+                RETIRE_FAIL(Translate_Exception(vaddr, E_Load_Page_Fault(), { ext_ptw with cheri_page_fault = PageFault_Cheri }))
               } else {
                 load_reservation(physaddr_bits(addr));
                 let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
@@ -725,10 +713,7 @@ function clause execute (LoadResCap(cd, rs1_cs1, aq, rl)) = {
                 RETIRE_SUCCESS
               }
             },
-            Err(e) => {
-              handle_mem_exception(vaddr, e);
-              RETIRE_FAIL
-            },
+            Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
           }
         }
       }
@@ -772,25 +757,21 @@ function clause execute LoadCapImm(cd, rs1_cs1, imm) = {
       // If we don't have C capability then the tag will always be cleared and
       // it is treated as an untagged load.
       match translateAddr(vaddr, Read(if canC(auth_val) then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+        TR_Failure(e, ext_ptw)          => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
         TR_Address(addr, pbmt, ext_ptw) => {
           let aq = false;
           let rl = false;
           match mem_read_cap(Read(Data), addr, pbmt, aq, aq & rl, false) {
             Ok(v) => {
               if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
-                handle_translate_exception(vaddr, E_Load_Page_Fault(), { ext_ptw with cheri_page_fault = PageFault_Cheri });
-                RETIRE_FAIL
+                RETIRE_FAIL(Translate_Exception(vaddr, E_Load_Page_Fault(), { ext_ptw with cheri_page_fault = PageFault_Cheri }))
               } else {
                 let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
                 C(cd) = legalizeLoadedPermissions(cr, auth_val);
                 RETIRE_SUCCESS
               }
             },
-            Err(e) => {
-              handle_mem_exception(vaddr, e);
-              RETIRE_FAIL
-            },
+            Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
           }
         }
       }
@@ -835,17 +816,17 @@ function clause execute StoreCapImm(cs2, rs1_cs1, imm) = {
       let cs2_val = legalizeStoredPermissions(cs2_val, auth_val);
 
       match translateAddr(vaddr, Write(if cs2_val.tag then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+        TR_Failure(e, ext_ptw)    => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
         TR_Address(addr, pbmt, _) => {
           let aq = false;
           let rl = false;
           match mem_write_ea_cap(addr, aq & rl, rl, false) {
-            Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Err(e) => { RETIRE_FAIL(Memory_Exception(vaddr, e)) },
             Ok(_)  => {
               match mem_write_cap(addr, pbmt, cs2_val, aq & rl, rl, false) {
                 Ok(true)  => RETIRE_SUCCESS,
                 Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
-                Err(e)    => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                Err(e)    => RETIRE_FAIL(Memory_Exception(vaddr, e)),
               }
             }
           }
@@ -887,7 +868,7 @@ function clause execute StoreCondCap(rd, cs2, rs1_cs1, aq, rl) = {
       let cs2_val = legalizeStoredPermissions(cs2_val, auth_val);
 
       match translateAddr(vaddr, Write(if cs2_val.tag then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+        TR_Failure(e, ext_ptw)    => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
         TR_Address(addr, pbmt, _) => {
           if not(match_reservation(physaddr_bits(addr))) then {
             /* cannot happen in rmem */
@@ -896,7 +877,7 @@ function clause execute StoreCondCap(rd, cs2, rs1_cs1, aq, rl) = {
             RETIRE_SUCCESS
           } else {
             match mem_write_ea_cap(addr, aq & rl, rl, true) {
-              Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+              Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
               Ok(_)  => {
                 match mem_write_cap(addr, pbmt, cs2_val, aq & rl, rl, true) {
                   Ok(true) => {
@@ -909,10 +890,7 @@ function clause execute StoreCondCap(rd, cs2, rs1_cs1, aq, rl) = {
                     cancel_reservation();
                     RETIRE_SUCCESS
                   },
-                  Err(e) => {
-                    handle_mem_exception(vaddr, e);
-                    RETIRE_FAIL
-                  }
+                  Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
                 }
               }
             }
@@ -955,31 +933,27 @@ function clause execute AMOSwapCap(cd, cs2, rs1_cs1, aq, rl) = {
       let typ = ReadWrite(if canC(auth_val) then Tagged else Data, if cs2_val.tag then Tagged else Data);
 
       match translateAddr(vaddr, typ) {
-        TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+        TR_Failure(e, ext_ptw)          => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
         TR_Address(addr, pbmt, ext_ptw) => {
           match mem_write_ea_cap(addr, aq & rl, rl, false) {
-            Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
+            Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
             Ok(_)  => {
               match mem_read_cap(typ, addr, pbmt, aq, aq & rl, false) {
                 Ok(v) => {
                   match mem_write_cap(addr, pbmt, cs2_val, aq & rl, rl, false) {
                     Ok(_) => {
                       if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
-                        handle_translate_exception(vaddr, E_Load_Page_Fault(), { ext_ptw with cheri_page_fault = PageFault_Cheri });
-                        RETIRE_FAIL
+                        RETIRE_FAIL(Translate_Exception(vaddr, E_Load_Page_Fault(), { ext_ptw with cheri_page_fault = PageFault_Cheri }))
                       } else {
                         let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
                         C(cd) = legalizeLoadedPermissions(cr, auth_val);
                         RETIRE_SUCCESS
                       }
                     },
-                    Err(e) => {
-                      handle_mem_exception(vaddr, e);
-                      RETIRE_FAIL
-                    },
+                    Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
                   }
                 },
-                Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL }
+                Err(e) => RETIRE_FAIL(Memory_Exception(vaddr, e)),
               }
             }
           }
