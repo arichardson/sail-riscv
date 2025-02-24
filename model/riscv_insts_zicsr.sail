@@ -32,9 +32,9 @@ val handle_csr_op : (
   csrop,
   bool,
   bool,
-) -> Retired(Retire_Failure)
+) -> ExecutionResult(Retire_Failure)
 
-function doCSR(csr : csreg, rs1 : regidx, rd : regidx, op : csrop, is_CSR_Write: bool, is_imm: bool) -> Retired(Retire_Failure) = {
+function doCSR(csr : csreg, rs1 : regidx, rd : regidx, op : csrop, is_CSR_Write: bool, is_imm: bool) -> ExecutionResult(Retire_Failure) = {
   if not(check_CSR(csr, cur_privilege(), is_CSR_Write))
   then RETIRE_FAIL(Illegal_Instruction())
   else {
@@ -55,7 +55,7 @@ function default_handle_csr_op(
   op : csrop,
   is_CSR_Write : bool,
   is_CSR_Read : bool,
-) -> Retired(Retire_Failure) = {
+) -> ExecutionResult(Retire_Failure) = {
   let rs1_val : xlenbits = if is_imm then zero_extend(regidx_bits(rs1)) else X(rs1);
   let csr_val : xlenbits = if is_CSR_Read then read_CSR(csr, rs1_val) else zeros();
   if is_CSR_Write then {
