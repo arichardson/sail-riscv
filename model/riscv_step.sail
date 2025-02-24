@@ -8,6 +8,12 @@
 
 /* The emulator fetch-execute-interrupt dispatch loop. */
 
+union Step = {
+  Step_Pending_Interrupt  : (InterruptType, Privilege),
+  Step_Ext_Fetch_Failure  : ext_fetch_addr_error,
+  Step_Execute            : Retired(Retire_Failure)
+}
+
 /* returns whether to increment the step count in the trace */
 function step(step_no : int) -> bool = {
   /* for step extensions */
@@ -23,66 +29,112 @@ function step(step_no : int) -> bool = {
    */
   minstret_increment = should_inc_minstret(cur_privilege());
 
-  let (retired, stepped) : (Retired, bool) =
+  /* instruction bits for faulting instructions */
+  var instbits : option(xlenbits) = None();
+
+  let (step_val, stepped) : (Step, bool) =
     if nmi_taken then {
       if   get_config_print_instr()
       then print_instr("Handling Non-Maskable Interrupt");
       handle_nmi();
-      (RETIRE_FAIL, false)
+      (Step_Execute(RETIRE_FAIL(Illegal_Instruction())), false) // FIXME: what should we return here?
     } else {
       match dispatchInterrupt(cur_privilege()) {
-        Some(excode, priv) => {
+        Some(intr, priv) => {
           if   get_config_print_instr()
-          then print_bits("Handling interrupt: ", excode);
-          handle_interrupt(excode, priv);
-          (RETIRE_FAIL, false)
+          then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
+          handle_interrupt(intr, priv);
+          (Step_Pending_Interrupt(intr, priv), false)
         },
         None() => {
           /* the extension hook interposes on the fetch result */
           match ext_fetch_hook(fetch()) {
             /* extension error */
-            F_Ext_Error(e)   => {
-              ext_handle_fetch_check_error(e);
-              (RETIRE_FAIL, false)
-            },
+            F_Ext_Error(e)   => (Step_Ext_Fetch_Failure(e), false),
             /* standard error */
-            F_Error(e, addr) => {
-              handle_mem_exception(Virtaddr(addr), e);
-              (RETIRE_FAIL, false)
-            },
+            F_Error(e, addr) => (Step_Execute(RETIRE_FAIL(Memory_Exception(Virtaddr(addr), e))), false),
             /* non-error cases: */
             F_RVC(h) => {
               sail_instr_announce(h);
-              instbits = zero_extend(h);
+              instbits = Some(zero_extend(h));
               let ast = ext_decode_compressed(h);
               if   get_config_print_instr()
               then ext_print_instr(step_no, ast, h);
               /* check for RVC once here instead of every RVC execute clause. */
               if currentlyEnabled(Ext_Zca) then {
                 nextPC = PC + 2;
-                (execute(ast), true)
+                (Step_Execute(execute(ast)), true)
               } else {
-                handle_illegal();
-                (RETIRE_FAIL, true)
+                (Step_Execute(RETIRE_FAIL(Illegal_Instruction())), true)
               }
             },
             F_Base(w) => {
               sail_instr_announce(w);
-              instbits = zero_extend(w);
+              instbits = Some(zero_extend(w));
               let ast = ext_decode(w);
               ext_print_instr(step_no, ast, w);
               nextPC = PC + 4;
-              (execute(ast), true)
+              (Step_Execute(execute(ast)), true)
             }
           }
         }
       }
     };
 
-  tick_pc();
+  match step_val {
+    Step_Pending_Interrupt(intr, priv) => {
+      if   get_config_print_instr()
+      then print_bits("Handling interrupt: ", interruptType_to_bits(intr));
+      minstret_increment = false;
+      handle_interrupt(intr, priv)
+    },
+    Step_Ext_Fetch_Failure(e) => {
+      minstret_increment = false;
+      ext_handle_fetch_check_error(e)
+    },
+    Step_Execute(RETIRE_OK()) => {
+      // default handling of minstret
+      ()
+    },
+    Step_Execute(RETIRE_FAIL(failure)) => match failure {
+      // standard failures
+      Trap(priv, ctl, pc)           => {
+        minstret_increment = false;
+        set_next_pc(exception_handler(priv, ctl, pc))
+      },
+      Memory_Exception(vaddr, exc)  => {
+        minstret_increment = false;
+        handle_mem_exception(vaddr, exc)
+      },
+      Translate_Exception(vaddr, exc, ext_ptw)  => {
+        minstret_increment = false;
+        handle_translate_exception(vaddr, exc, ext_ptw)
+      },
+      CHERI_Exception(ty, exc, vaddr) => {
+        minstret_increment = false;
+        handle_cheri_exception(ty, exc, vaddr)
+      },
+      Illegal_Instruction() => {
+        minstret_increment = false;
+        match instbits {
+          None()         => internal_error(__FILE__, __LINE__, "no instruction bits for illegal instruction"),
+          Some(instbits) => handle_illegal(instbits)
+        }
+      },
+      Wait_For_Interrupt() => {
+        // This is currently treated as a nop with the default handling of minstret.
+        platform_wfi();
+      },
 
-  // Only increment minstret if the instruction retired successfully.
-  if retired != RETIRE_SUCCESS then minstret_increment = false;
+      // failures from extensions
+      Ext_CSR_Check_Failure(fail_type) => { minstret_increment = false; ext_check_CSR_fail(fail_type) },
+      Ext_ControlAddr_Check_Failure(e) => { minstret_increment = false; ext_handle_control_check_error(e) },
+      Ext_DataAddr_Check_Failure(e)    => { minstret_increment = false; ext_handle_data_check_error(e) },
+      Ext_XRET_Priv_Failure()          => { minstret_increment = false; ext_fail_xret_priv () }
+    }
+  };
+
+  tick_pc();
 
   update_minstret();
 

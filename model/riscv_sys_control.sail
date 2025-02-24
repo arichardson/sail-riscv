@@ -150,12 +150,12 @@ function getPendingSet(priv : Privilege) -> option((xlenbits, Privilege)) = {
 /* Examine the current interrupt state and return an interrupt to be *
  * handled (if any), and the privilege it should be handled at.
  */
-function dispatchInterrupt(priv : Privilege) -> option((exc_code, Privilege)) = {
+function dispatchInterrupt(priv : Privilege) -> option((InterruptType, Privilege)) = {
   match getPendingSet(priv) {
     None()       => None(),
     Some(ip, p)  => match findPendingInterrupt(ip) {
                       None()  => None(),
-                      Some(i) => Some((interruptType_to_bits(i), p)),
+                      Some(i) => Some((i, p)),
                     }
   }
 }
@@ -333,8 +333,8 @@ function handle_exception(e: ExceptionType) -> unit = {
   set_next_pc(exception_handler(cur_privilege(), CTL_TRAP(t), PC))
 }
 
-function handle_interrupt(i : exc_code, del_priv : Privilege) -> unit =
-  set_next_pc(trap_handler(del_priv, true, i, PC, None(), None()))
+function handle_interrupt(i : InterruptType, del_priv : Privilege) -> unit =
+  set_next_pc(trap_handler(del_priv, true, interruptType_to_bits(i), PC, None(), None()))
 
 function handle_nmi() -> unit = {
   set_next_pc(nmi_handler());
