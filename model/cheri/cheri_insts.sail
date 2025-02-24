@@ -649,7 +649,7 @@ function cap_mem_access_exception(auth_val : Capability, Virtaddr(vaddr) : virta
   }
 }
 
-function cap_mem_standard_errors(auth_val : Capability, vaddr : virtaddr, acc_type : CapAccessType) -> option(Retired(Retire_Failure)) = {
+function cap_mem_standard_errors(auth_val : Capability, vaddr : virtaddr, acc_type : CapAccessType) -> option(ExecutionResult(Retire_Failure)) = {
   match cap_mem_access_exception(auth_val, vaddr, acc_type) {
     Some(e) => {
       Some(RETIRE_FAIL(CHERI_Exception(CapCheckType_Data, e, vaddr)))

@@ -121,7 +121,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   /* Get the address, X(rs1) (no offset).
     * Extensions might perform additional checks on address validity.
     */
-  let res : Retired(Retire_Failure) = match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
+  let res : ExecutionResult(Retire_Failure) = match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
       if not(is_aligned(virtaddr_bits(vaddr), width))
