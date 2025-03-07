@@ -212,9 +212,8 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, ext_ptw)    => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
         TR_Address(addr, pbmt, _) => {
-          let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];
-          match eares {
+          match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
             Err(e) => { handle_mem_exception(vaddr, e); RETIRE_FAIL },
             Ok(_) => {
               match mem_read(ReadWrite(Data, Data), pbmt, addr, width_bytes, aq, aq & rl, true) {
