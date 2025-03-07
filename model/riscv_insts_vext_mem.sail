@@ -273,13 +273,11 @@ function process_vsseg (nf, vm, vs3, load_width_bytes, rs1, EMUL_pow, num_elem) 
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); return RETIRE_FAIL },
               TR_Address(paddr, pbmt, _) => {
-                let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
-                match (eares) {
+                match mem_write_ea(paddr, load_width_bytes, false, false, false) {
                   Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                   Ok(_)  => {
                     let elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(5, j * EMUL_reg)));
-                    let res : MemoryOpResult(bool) = mem_write_value(pbmt, paddr, load_width_bytes, elem_val, false, false, false);
-                    match (res) {
+                    match mem_write_value(pbmt, paddr, load_width_bytes, elem_val, false, false, false) {
                       Ok(true)  => (),
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       Err(e)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
@@ -418,13 +416,11 @@ function process_vssseg (nf, vm, vs3, load_width_bytes, rs1, rs2, EMUL_pow, num_
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); return RETIRE_FAIL },
               TR_Address(paddr, pbmt, _) => {
-                let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
-                match (eares) {
+                match mem_write_ea(paddr, load_width_bytes, false, false, false) {
                   Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                   Ok(_)  => {
                     let elem_val : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(5, j * EMUL_reg)));
-                    let res : MemoryOpResult(bool) = mem_write_value(pbmt, paddr, load_width_bytes, elem_val, false, false, false);
-                    match (res) {
+                    match mem_write_value(pbmt, paddr, load_width_bytes, elem_val, false, false, false) {
                       Ok(true)  => (),
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       Err(e)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
@@ -597,13 +593,11 @@ function process_vsxseg (nf, vm, vs3, EEW_index_bytes, EEW_data_bytes, EMUL_inde
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); return RETIRE_FAIL },
               TR_Address(paddr, pbmt, _) => {
-                let eares : MemoryOpResult(unit) = mem_write_ea(paddr, EEW_data_bytes, false, false, false);
-                match (eares) {
+                match mem_write_ea(paddr, EEW_data_bytes, false, false, false) {
                   Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                   Ok(_)  => {
                     let elem_val : bits('db * 8) = read_single_element(EEW_data_bytes * 8, i, vregidx_offset(vs3, to_bits(5, j * EMUL_data_reg)));
-                    let res : MemoryOpResult(bool) = mem_write_value(pbmt, paddr, EEW_data_bytes, elem_val, false, false, false);
-                    match (res) {
+                    match mem_write_value(pbmt, paddr, EEW_data_bytes, elem_val, false, false, false) {
                       Ok(true)  => (),
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       Err(e)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
@@ -785,13 +779,11 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
           else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); return RETIRE_FAIL },
             TR_Address(paddr, pbmt, _) => {
-              let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
-              match (eares) {
+              match mem_write_ea(paddr, load_width_bytes, false, false, false) {
                 Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                 Ok(_)  => {
                   let elem : bits('b * 8) = read_single_element(load_width_bytes * 8, i, vregidx_offset(vs3, to_bits(5, cur_field)));
-                  let res : MemoryOpResult(bool) = mem_write_value(pbmt, paddr, load_width_bytes, elem, false, false, false);
-                  match (res) {
+                  match mem_write_value(pbmt, paddr, load_width_bytes, elem, false, false, false) {
                     Ok(true)  => (),
                     Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                     Err(e)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
@@ -819,12 +811,10 @@ function process_vsre (nf, load_width_bytes, rs1, vs3, elem_per_reg) = {
           else match translateAddr(vaddr, Write(Data)) {
             TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); return RETIRE_FAIL },
             TR_Address(paddr, pbmt, _) => {
-              let eares : MemoryOpResult(unit) = mem_write_ea(paddr, load_width_bytes, false, false, false);
-              match (eares) {
+              match mem_write_ea(paddr, load_width_bytes, false, false, false) {
                 Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                 Ok(_)  => {
-                  let res : MemoryOpResult(bool) = mem_write_value(pbmt, paddr, load_width_bytes, vs3_val[i], false, false, false);
-                  match (res) {
+                  match mem_write_value(pbmt, paddr, load_width_bytes, vs3_val[i], false, false, false) {
                     Ok(true)  => (),
                     Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                     Err(e)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
@@ -906,12 +896,10 @@ function process_vm(vd_or_vs3, rs1, num_elem, evl, op) = {
             else match translateAddr(vaddr, Write(Data)) {
               TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr, e, ext_ptw); return RETIRE_FAIL },
               TR_Address(paddr, pbmt, _) => {
-                let eares : MemoryOpResult(unit) = mem_write_ea(paddr, 1, false, false, false);
-                match (eares) {
+                match mem_write_ea(paddr, 1, false, false, false) {
                   Err(e) => { handle_mem_exception(vaddr, e); return RETIRE_FAIL },
                   Ok(_)  => {
-                    let res : MemoryOpResult(bool) = mem_write_value(pbmt, paddr, 1, vd_or_vs3_val[i], false, false, false);
-                    match (res) {
+                    match mem_write_value(pbmt, paddr, 1, vd_or_vs3_val[i], false, false, false) {
                       Ok(true)  => (),
                       Ok(false) => internal_error(__FILE__, __LINE__, "store got false from mem_write_value"),
                       Err(e)    => { handle_mem_exception(vaddr, e); return RETIRE_FAIL }
