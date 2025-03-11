@@ -184,6 +184,20 @@ val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 // maskmax6 value for Sdtrig
 val sys_maskmax6 = pure "sys_maskmax6" : unit -> range(0, 63)
 
+// Is the Zvkb extension supported.
+val sys_enable_zvkb = pure "sys_enable_zvkb" : unit -> bool
+
+// Is the Sstc stimecmp extension supported.
+val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
+
+// Supervisor timecmp
+function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
+
+/* This function allows an extension to veto a write to Misa
+   if it would violate an alignment restriction on
+   unsetting C. If it returns true the write will have no effect. */
+val ext_veto_disable_C : unit -> bool
+
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let  v = Mk_Misa(v);
   /* Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes */
