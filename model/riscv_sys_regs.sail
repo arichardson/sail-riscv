@@ -517,7 +517,7 @@ function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
  match trapVectorMode_bits(v[Mode]) {
    TV_Direct => v,
    TV_Vector => v,
-   _         => [v with Mode = o[Mode]]
+   inv_mode  => [v with Mode = trapVectorMode_bits(inv_mode) & 0b01]
  }
 }
 
