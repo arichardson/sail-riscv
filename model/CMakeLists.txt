@@ -263,7 +263,7 @@ foreach (xlen IN ITEMS 32 64)
                         # deprecated because it is error-prone.
                         --strict-var
                         # Minimum required Sail compiler version.
-                        --require-version 0.18
+                        --require-version ${SAIL_REQUIRED_VER}
                         # Optimisations.
                         -O --Oconstant-fold
                         # Cache Z3 results in z3_problems file to speed up incremental compilation.
@@ -331,6 +331,8 @@ foreach (xlen IN ITEMS 32 64)
                         -o ${CMAKE_CURRENT_BINARY_DIR}
                         # The name of the JSON file.
                         --doc-bundle ${model_doc}
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -354,6 +356,8 @@ foreach (xlen IN ITEMS 32 64)
                         --smt
                         # The prefix of the output files.
                         -o "${CMAKE_CURRENT_BINARY_DIR}/model"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                     COMMAND ${CMAKE_COMMAND} -E touch ${smt_stamp_file}
@@ -386,6 +390,8 @@ foreach (xlen IN ITEMS 32 64)
                         --isa-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         # The prefix of the output files.
                         -o "lem_${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -403,6 +409,8 @@ foreach (xlen IN ITEMS 32 64)
                         --tofrominterp-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         # The prefix of the output files.
                         -o "rmem_${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -417,6 +425,8 @@ foreach (xlen IN ITEMS 32 64)
                         --marshal
                         # The prefix of the output files.
                         -o "rmem_${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -445,6 +455,8 @@ foreach (xlen IN ITEMS 32 64)
                         --coq-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         # The prefix of the output files.
                         -o "coq_${arch}"
+                        # Minimum required Sail compiler version.
+                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -464,7 +476,7 @@ foreach (xlen IN ITEMS 32 64)
                         ${SAIL_BIN}
                         --lean
                         --memo-z3
-                        --require-version 0.19
+                        --require-version ${SAIL_REQUIRED_VER}
                         --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         --lean-force-output
                         --lean-noncomputable
