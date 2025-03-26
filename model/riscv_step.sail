@@ -100,6 +100,7 @@ function reset() -> unit = {
 
   // To allow model extensions (code outside this repo) to perform additional reset.
   ext_reset_misa();
+  ext_cheri_reset();
   ext_reset();
 }
 
