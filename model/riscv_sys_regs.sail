@@ -119,7 +119,7 @@ val sys_medeleg_writable_bits = pure "sys_medeleg_writable_bits" : unit -> bits(
 val sys_mideleg_writable_bits = pure "sys_mideleg_writable_bits" : unit -> bits(64)
 val sys_xtvec_writable_bits = pure "sys_xtvec_writable_bits" : unit -> bits(64)
 
-val sys_xcause_bits = pure "sys_xcause_bits" : unit -> range(0, 64)
+val sys_xcause_bits = pure "sys_xcause_bits" : unit -> range(0, 63)
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
 val sys_pmp_count = pure "sys_pmp_count" : unit -> range(0, 64)
