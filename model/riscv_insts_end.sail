@@ -8,6 +8,8 @@
 
 /* Put the illegal instructions last to use their wildcard match. */
 
+function clause extensionEnabled(_) = false
+
 /* ****************************************************************** */
 
 mapping clause encdec = ILLEGAL(s) <-> s
