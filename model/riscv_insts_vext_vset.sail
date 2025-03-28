@@ -95,6 +95,12 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
 }
 
 function writeback_vill() -> unit = writeback_vset(0b1 @ zeros(xlen - 1), zeros())
+/* *********************************** vsetvli *********************************** */
+union clause ast = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+
+mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
+  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx) -> Retired = {
   let vtype_new : Vtype = struct { bits = vtype_bits_new };
@@ -146,8 +152,9 @@ function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx)
 /* ****************************** vsetvl ******************************* */
 union clause ast = VSETVL_TYPE : (regidx, regidx, regidx)
 
-mapping clause encdec = VSETVL_TYPE(rs2, rs1, rd)                                        if extensionEnabled(Ext_V)
-  <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETVL_TYPE(rs2, rs1, rd)
+  <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute VSETVL_TYPE(rs2, rs1, rd) = process_vset(X(rs2), get_avl(rd, rs1), rd)
 
@@ -169,8 +176,9 @@ mapping clause assembly = VSETVLI_TYPE(ma, ta, sew, lmul, rs1, rd)
 /* ********************************* vsetivli ************************************ */
 union clause ast = VSETIVLI_TYPE : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
-mapping clause encdec = VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd)              if extensionEnabled(Ext_V)
-  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd)
+  <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
+  when extensionEnabled(Ext_V)
 
 function clause execute VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd) =
   process_vset(0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul, Some(unsigned(uimm)), rd)
