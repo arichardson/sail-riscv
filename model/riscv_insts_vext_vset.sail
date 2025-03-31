@@ -24,7 +24,6 @@ mapping sew_flag : string <-> bits(3) = {
 }
 
 mapping maybe_lmul_flag : string <-> bits(3) = {
-  ""              <-> 0b000, /* m1 by default */
   sep() ^ "mf8"   <-> 0b101,
   sep() ^ "mf4"   <-> 0b110,
   sep() ^ "mf2"   <-> 0b111,
@@ -32,18 +31,17 @@ mapping maybe_lmul_flag : string <-> bits(3) = {
   sep() ^ "m2"    <-> 0b001,
   sep() ^ "m4"    <-> 0b010,
   sep() ^ "m8"    <-> 0b011,
+  sep() ^ "mf16"  <-> 0b100,
+  forwards ""      => 0b000, /* m1 by default */
 
-  sep() ^ "mf16"    <-> 0b100,
 }
 
-mapping maybe_ta_flag : string <-> bits(1) = {
-  ""           <-> 0b0, /* tu by default */
+mapping ta_flag : string <-> bits(1) = {
   sep() ^ "ta" <-> 0b1,
   sep() ^ "tu" <-> 0b0
 }
 
-mapping maybe_ma_flag : string <-> bits(1) = {
-  ""           <-> 0b0, /* mu by default */
+mapping ma_flag : string <-> bits(1) = {
   sep() ^ "ma" <-> 0b1,
   sep() ^ "mu" <-> 0b0
 }
@@ -149,8 +147,8 @@ function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx)
   RETIRE_SUCCESS
 }
 
-/* ****************************** vsetvl ******************************* */
-union clause ast = VSETVL_TYPE : (regidx, regidx, regidx)
+mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
+  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
 
 mapping clause encdec = VSETVL_TYPE(rs2, rs1, rd)
   <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
@@ -184,4 +182,4 @@ function clause execute VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd) =
   process_vset(0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul, Some(unsigned(uimm)), rd)
 
 mapping clause assembly = VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd)
-  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ maybe_ta_flag(ta) ^ maybe_ma_flag(ma)
+  <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
