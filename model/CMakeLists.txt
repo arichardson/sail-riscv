@@ -91,6 +91,9 @@ foreach (xlen IN ITEMS 32 64)
                 "cheri/cheri_insts_cext.sail"
                 "cheri/cheri_insts_zba.sail"
                 "cheri/cheri_insts_end.sail"
+                # Zimop and Zcmop should be at the end so they can be overridden by earlier extensions
+                "riscv_insts_zimop.sail"
+                "riscv_insts_zcmop.sail"
             )
 
             if (variant STREQUAL "rmem")
