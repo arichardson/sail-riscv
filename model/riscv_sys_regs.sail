@@ -187,6 +187,8 @@ val sys_maskmax6 = pure "sys_maskmax6" : unit -> range(0, 63)
 // Is the Zvkb extension supported.
 val sys_enable_zvkb = pure "sys_enable_zvkb" : unit -> bool
 
+// Is the Zvbc extension supported.
+function sys_enable_zvbc() -> bool = true
 // Is the Sstc stimecmp extension supported.
 val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
 
