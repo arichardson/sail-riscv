@@ -28,7 +28,7 @@ val is_taggable : (physaddr, mem_access_width) -> bool
  */
 function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, tag : mem_meta) -> unit = {
   // Clear tag if writing to untaggable memory.
-  let tag = tag & is_taggable(physaddr(addr), width);
+  let tag = tag & is_taggable(Physaddr(addr), width);
 
   let tag_addr = addr_to_tag_addr(addr);
   if get_config_print_mem() then
@@ -56,5 +56,5 @@ function __ReadRAM_Meta(addr : physaddrbits, width : mem_access_width) -> mem_me
   // Read false if reading from untaggable memory. We could potentially
   // get away without this since we never allow writing tags to untaggable
   // memory, and tags are reset to 0 and the taggable PMA is fixed.
-  tag & is_taggable(physaddr(addr), width)
+  tag & is_taggable(Physaddr(addr), width)
 }

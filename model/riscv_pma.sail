@@ -59,13 +59,13 @@ struct PMA_Region = {
 }
 
 // Get the first PMA that matches a given address range.
-function matching_pma(pmas : list(PMA_Region), physaddr(addr) : physaddr, width : mem_access_width) -> option(PMA_Region) = {
+function matching_pma(pmas : list(PMA_Region), Physaddr(addr) : physaddr, width : mem_access_width) -> option(PMA_Region) = {
   match pmas {
     [||] => None(),
     pma :: rest => {
       if range_subset(addr, addr + width, physaddr_bits(pma.base), physaddr_bits(pma.base) + pma.size)
       then Some(pma)
-      else matching_pma(rest, physaddr(addr), width)
+      else matching_pma(rest, Physaddr(addr), width)
     },
   }
 }

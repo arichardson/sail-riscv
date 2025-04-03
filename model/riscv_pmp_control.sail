@@ -42,7 +42,7 @@ function pmpRangeMatch(
   else    PMP_PartialMatch
 
 function pmpMatchAddr(
-  physaddr(addr) : physaddr,
+  Physaddr(addr) : physaddr,
   width : xlenbits,
   ent : Pmpcfg_ent,
   pmpaddr : xlenbits,
