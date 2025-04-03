@@ -35,7 +35,7 @@
  * per the platform memory map.
  */
 
-function is_aligned_addr_phys forall 'n. (physaddr(addr) : physaddr, width : int('n)) -> bool =
+function is_aligned_addr_phys forall 'n. (Physaddr(addr) : physaddr, width : int('n)) -> bool =
   unsigned(addr) % width == 0
 
 function is_aligned_addr_virt forall 'n. (virtaddr(addr) : virtaddr, width : int('n)) -> bool =

@@ -308,7 +308,7 @@ function nmi_handler() -> xlenbits = {
   handler_address
 }
 
-function handle_mem_exception(virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
+function handle_mem_exception(Virtaddr(addr) : virtaddr, e : ExceptionType) -> unit = {
   let addr = convertInvalidAddr(addr);
   let t : sync_exception = struct { trap    = e,
                                     excinfo = Some(addr),
