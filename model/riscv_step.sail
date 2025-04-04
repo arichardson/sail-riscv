@@ -30,7 +30,7 @@ function retires_or_traps(r : ExecutionResult(Retire_Failure)) -> bool =
     // errors from extensions
     RETIRE_FAIL(Ext_ControlAddr_Check_Failure(_)) => true,
     RETIRE_FAIL(Ext_DataAddr_Check_Failure(_))    => true,
-    RETIRE_FAIL(Ext_CSR_Check_Failure(fail_type)) => true,
+    RETIRE_FAIL(Ext_CSR_Check_Failure(_)) => true,
     RETIRE_FAIL(Ext_XRET_Priv_Failure(_))         => true,
 }
 
