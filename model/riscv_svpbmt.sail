@@ -1,5 +1,5 @@
 // Is PBMT currently available to supervisor mode.
-function clause extensionEnabled(Ext_Svpbmt) = menvcfg[PBMTE] == 0b1
+function clause currentlyEnabled(Ext_Svpbmt) = menvcfg[PBMTE] == 0b1
 
 // Possible PMA override modes from Page Based Memory Types.
 enum PBMT = {

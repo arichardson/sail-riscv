@@ -97,21 +97,6 @@ register misa : Misa =
 /* whether misa is R/W */
 function sys_enable_writable_misa() -> bool = config base.writable_misa
 
-/* whether misa.c was enabled at boot */
-function sys_enable_rvc() -> bool = config extensions.C.enabled
-
-/* whether misa.{f,d} were enabled at boot */
-function sys_enable_fdext() -> bool = config extensions.FD.enabled
-
-/* whether Svinval was enabled at boot */
-function sys_enable_svinval() -> bool = config extensions.Svinval.enabled
-
-/* whether Zcb was enabled at boot */
-function sys_enable_zcb() -> bool = config extensions.Zcb.enabled
-
-/* whether zfinx was enabled at boot */
-function sys_enable_zfinx() -> bool = config extensions.Zfinx.enabled
-
 /* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
    supervisor mode is implemented and non-bare addressing modes are supported. */
 function sys_enable_writable_fiom() -> bool = config base.writable_fiom
@@ -182,30 +167,12 @@ val sys_enable_tlb = pure "sys_enable_tlb" : unit -> bool
 
 val sys_enable_svnapot = pure "sys_enable_svnapot" : unit -> bool
 
-/* whether misa.v was enabled at boot */
-function sys_enable_vext() -> bool = config extensions.V.enabled
-
-/* whether misa.b was enabled at boot */
-function sys_enable_bext() -> bool = config extensions.B.enabled
-
-// CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
-// at all on this model.
-function sys_enable_zicbom() -> bool = config extensions.Zicbom.enabled
-function sys_enable_zicboz() -> bool = config extensions.Zicboz.enabled
-
 // maskmax6 value for Sdtrig
 val sys_maskmax6 = pure "sys_maskmax6" : unit -> range(0, 63)
 
-// Is the Zvkb extension supported.
-function sys_enable_zvkb() -> bool = config extensions.Zvkb.enabled
-
-// Is the Zvbc extension supported.
-function sys_enable_zvbc() -> bool = true
-// Is the Sstc stimecmp extension supported.
-function sys_enable_sstc() -> bool = config extensions.Sstc.enabled
 
 // Supervisor timecmp
-function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
+function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
 
 /* This function allows an extension to veto a write to Misa
    if it would violate an alignment restriction on
@@ -219,9 +186,9 @@ function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   then m
   else {
     // Suppress enabling C if it is not supported.
-    let m = if not(sys_enable_rvc()) then m else [m with C = v[C]];
+    let m = if not(hartSupports(Ext_C)) then m else [m with C = v[C]];
     /* Suppress updates to misa.{f,d} if disabled at boot */
-    if   not(sys_enable_fdext())
+    if   not(hartSupports(Ext_F))
     then m
     else [m with F = v[F], D = v[D] & v[F]]
   }
@@ -240,25 +207,25 @@ function sys_enable_supervisor() -> bool = true
 // Are supervisor/user mode currently enabled? Although
 // unlikely and not currently supported by the model,
 // you are technically allowed to have writable misa[U/S].
-function clause extensionEnabled(Ext_U) = misa[U] == 0b1
-function clause extensionEnabled(Ext_S) = misa[S] == 0b1
+function clause currentlyEnabled(Ext_U) = misa[U] == 0b1
+function clause currentlyEnabled(Ext_S) = misa[S] == 0b1
 // Note the model doesn't support hypervisor mode yet.
-function clause extensionEnabled(Ext_H) = misa[H] == 0b1
+function clause currentlyEnabled(Ext_H) = misa[H] == 0b1
 
 // Svnapot depends on Sv39.
-function clause extensionEnabled(Ext_Svnapot) = sys_enable_svnapot() & sys_enable_sv39()
+function clause currentlyEnabled(Ext_Svnapot) = sys_enable_svnapot() & sys_enable_sv39()
 
 /*
  * Illegal values legalized to least privileged mode supported.
  * Note: the only valid combinations of supported modes are M, M+U, M+S+U.
  */
 function lowest_supported_privLevel() -> Privilege =
-  if extensionEnabled(Ext_U) then User else Machine
+  if currentlyEnabled(Ext_U) then User else Machine
 
 function have_privLevel(priv : priv_level) -> bool =
   match priv {
-    0b00 => extensionEnabled(Ext_U),
-    0b01 => extensionEnabled(Ext_S),
+    0b00 => currentlyEnabled(Ext_U),
+    0b01 => currentlyEnabled(Ext_S),
     0b10 => false,
     0b11 => true,
   }
@@ -289,7 +256,7 @@ function legalize_mpp(mpp : bits(2)) -> bits(2) =
 
 // "If privilege mode x is not implemented, then xPP must be read-only 0."
 function legalize_spp(spp : bits(1)) -> bits(1) =
-  if extensionEnabled(Ext_S) then spp else 0b0
+  if currentlyEnabled(Ext_S) then spp else 0b0
 
 function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   /*
@@ -312,12 +279,12 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     // UXL = if xlen == 64 then v[UXL] else o[UXL],
     // SDT = v[SDT],
     // SPELP = v[SPELP],
-    TSR = if extensionEnabled(Ext_S) then v[TSR] else 0b0,
-    TW = if extensionEnabled(Ext_U) then v[TW] else 0b0,
-    TVM = if extensionEnabled(Ext_S) then v[TVM] else 0b0,
-    MXR = if extensionEnabled(Ext_S) then v[MXR] else 0b0,
-    SUM = if extensionEnabled(Ext_S) then v[SUM] else 0b0, // TODO: Should also be disabled if satp.MODE is read-only 0
-    MPRV = if extensionEnabled(Ext_U) then v[MPRV] else 0b0,
+    TSR = if currentlyEnabled(Ext_S) then v[TSR] else 0b0,
+    TW = if currentlyEnabled(Ext_U) then v[TW] else 0b0,
+    TVM = if currentlyEnabled(Ext_S) then v[TVM] else 0b0,
+    MXR = if currentlyEnabled(Ext_S) then v[MXR] else 0b0,
+    SUM = if currentlyEnabled(Ext_S) then v[SUM] else 0b0, // TODO: Should also be disabled if satp.MODE is read-only 0
+    MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
     /* We don't have any extension context yet. */
     XS = extStatus_to_bits(Off),
   /* FS is WARL, and making FS writable can support the M-mode emulation of an FPU
@@ -325,14 +292,14 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
    * but only if Zfinx isn't enabled.
    * FIXME: This should be made a platform parameter.
    */
-    FS = if sys_enable_zfinx() then extStatus_to_bits(Off) else v[FS],
+    FS = if hartSupports(Ext_Zfinx) then extStatus_to_bits(Off) else v[FS],
     MPP = legalize_mpp(v[MPP]),
     SPP = legalize_spp(v[SPP]),
     VS = v[VS],
     MPIE = v[MPIE],
-    SPIE = if extensionEnabled(Ext_S) then v[SPIE] else 0b0,
+    SPIE = if currentlyEnabled(Ext_S) then v[SPIE] else 0b0,
     MIE = v[MIE],
-    SIE = if extensionEnabled(Ext_S) then v[SIE] else 0b0,
+    SIE = if currentlyEnabled(Ext_S) then v[SIE] else 0b0,
   ];
 
   // Set dirty bit to OR of other status bits.
@@ -410,9 +377,9 @@ mapping clause csr_name_map = 0x30A  <-> "menvcfg"
 mapping clause csr_name_map = 0x31A  <-> "menvcfgh"
 mapping clause csr_name_map = 0x10A  <-> "senvcfg"
 
-function clause is_CSR_defined(0x30A) = extensionEnabled(Ext_U) // menvcfg
-function clause is_CSR_defined(0x31A) = extensionEnabled(Ext_U) & (xlen == 32) // menvcfgh
-function clause is_CSR_defined(0x10A) = extensionEnabled(Ext_S) // senvcfg
+function clause is_CSR_defined(0x30A) = currentlyEnabled(Ext_U) // menvcfg
+function clause is_CSR_defined(0x31A) = currentlyEnabled(Ext_U) & (xlen == 32) // menvcfgh
+function clause is_CSR_defined(0x10A) = currentlyEnabled(Ext_S) // senvcfg
 
 function clause read_CSR(0x30A, _) = menvcfg.bits[xlen - 1 .. 0]
 function clause read_CSR((0x31A, _) if xlen == 32) = menvcfg.bits[63 .. 32]
@@ -469,12 +436,14 @@ function legalize_mip(o : Minterrupts, v : xlenbits) -> Minterrupts = {
   // MEI, MTI and MSI are read-only in mip.
   let v = Mk_Minterrupts(v);
   [o with
-    SEI = if extensionEnabled(Ext_S) then v[SEI] else 0b0,
-    STI = if extensionEnabled(Ext_S) then (
-      if not(sys_writable_stip()) | extensionEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
+    SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
+    SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
+    STI = if currentlyEnabled(Ext_S) then (
+      // STI is read only if Sstc is enabled and STCE is set (it is equal to stimecmp <= mtime).
+      if not(sys_writable_stip()) | currentlyEnabled(Ext_Sstc) & menvcfg[STCE] == 0b1 then o[STI] else v[STI]
     ) else 0b0,
-    SSI = if extensionEnabled(Ext_S) then v[SSI] else 0b0,
-    LCOFI = if extensionEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
+    SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
+    LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
   ]
 }
 
@@ -484,10 +453,10 @@ function legalize_mie(o : Minterrupts, v : xlenbits) -> Minterrupts = {
     MEI = v[MEI],
     MTI = v[MTI],
     MSI = v[MSI],
-    SEI = if extensionEnabled(Ext_S) then v[SEI] else 0b0,
-    STI = if extensionEnabled(Ext_S) then v[STI] else 0b0,
-    SSI = if extensionEnabled(Ext_S) then v[SSI] else 0b0,
-    LCOFI = if extensionEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
+    SEI = if currentlyEnabled(Ext_S) then v[SEI] else 0b0,
+    STI = if currentlyEnabled(Ext_S) then v[STI] else 0b0,
+    SSI = if currentlyEnabled(Ext_S) then v[SSI] else 0b0,
+    LCOFI = if currentlyEnabled(Ext_Sscofpmf) then v[LCOFI] else 0b0,
   ]
 }
 
@@ -534,9 +503,9 @@ mapping clause csr_name_map = 0x303  <-> "mideleg"
 
 function clause is_CSR_defined(0x304) = true // mie
 function clause is_CSR_defined(0x344) = true // mip
-function clause is_CSR_defined(0x302) = extensionEnabled(Ext_S) // medeleg
-function clause is_CSR_defined(0x312) = extensionEnabled(Ext_S) & xlen == 32 // medelegh
-function clause is_CSR_defined(0x303) = extensionEnabled(Ext_S) // mideleg
+function clause is_CSR_defined(0x302) = currentlyEnabled(Ext_S) // medeleg
+function clause is_CSR_defined(0x312) = currentlyEnabled(Ext_S) & xlen == 32 // medelegh
+function clause is_CSR_defined(0x303) = currentlyEnabled(Ext_S) // mideleg
 
 function clause read_CSR(0x304, _) = mie.bits
 function clause read_CSR(0x344, _) = mip.bits
@@ -635,7 +604,7 @@ register mepc : xlenbits
  */
 function legalize_xepc(v : xlenbits) -> xlenbits = {
   // allow writing xepc[1] only if misa.C is enabled or could be enabled.
-  if   sys_enable_rvc()
+  if   hartSupports(Ext_C)
   then [v with 0 = bitzero]
   else [v with 1..0 = zeros()]
 }
@@ -685,7 +654,7 @@ function legalize_scounteren(c : Counteren, v : xlenbits) -> Counteren = {
 
 register scounteren : Counteren
 mapping clause csr_name_map = 0x106  <-> "scounteren"
-function clause is_CSR_defined(0x106) = extensionEnabled(Ext_S) // scounteren
+function clause is_CSR_defined(0x106) = currentlyEnabled(Ext_S) // scounteren
 function clause read_CSR(0x106, _) = zero_extend(scounteren.bits)
 function clause write_CSR(0x106, value) = { scounteren = legalize_scounteren(scounteren, value); zero_extend(scounteren.bits) }
 
@@ -697,7 +666,7 @@ function legalize_mcounteren(c : Counteren, v : xlenbits) -> Counteren = {
 
 register mcounteren : Counteren
 mapping clause csr_name_map = 0x306  <-> "mcounteren"
-function clause is_CSR_defined(0x306) = extensionEnabled(Ext_U) // mcounteren
+function clause is_CSR_defined(0x306) = currentlyEnabled(Ext_U) // mcounteren
 function clause read_CSR(0x306, _) = zero_extend(mcounteren.bits)
 function clause write_CSR(0x306, value) = { mcounteren = legalize_mcounteren(mcounteren, value); zero_extend(mcounteren.bits) }
 
@@ -863,7 +832,7 @@ function set_xstatus(priv : Privilege, xstatus : bits(64)) -> unit = {
 }
 
 mapping clause csr_name_map = 0x100  <-> "sstatus"
-function clause is_CSR_defined(0x100) = extensionEnabled(Ext_S) // sstatus
+function clause is_CSR_defined(0x100) = currentlyEnabled(Ext_S) // sstatus
 function clause read_CSR(0x100, _) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
 function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, zero_extend(value)); mstatus.bits[xlen - 1 .. 0] }
 
@@ -912,7 +881,7 @@ function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
 }
 
 mapping clause csr_name_map = 0x144  <-> "sip"
-function clause is_CSR_defined(0x144) = extensionEnabled(Ext_S) // sip
+function clause is_CSR_defined(0x144) = currentlyEnabled(Ext_S) // sip
 function clause read_CSR(0x144, _) = lower_mip(mip, mideleg).bits
 function clause write_CSR(0x144, value) = { mip = lift_sip(mip, mideleg, Mk_Sinterrupts(value)); mip.bits }
 
@@ -929,7 +898,7 @@ function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
 }
 
 mapping clause csr_name_map = 0x104  <-> "sie"
-function clause is_CSR_defined(0x104) = extensionEnabled(Ext_S) // sie
+function clause is_CSR_defined(0x104) = currentlyEnabled(Ext_S) // sie
 function clause read_CSR(0x104, _) = lower_mie(mie, mideleg).bits
 function clause write_CSR(0x104, value) = { mie = lift_sie(mie, mideleg, Mk_Sinterrupts(value)); mie.bits }
 
@@ -944,9 +913,9 @@ mapping clause csr_name_map = 0x140  <-> "sscratch"
 mapping clause csr_name_map = 0x142  <-> "scause"
 mapping clause csr_name_map = 0x143  <-> "stval"
 
-function clause is_CSR_defined(0x140) = extensionEnabled(Ext_S) // sscratch
-function clause is_CSR_defined(0x142) = extensionEnabled(Ext_S) // scause
-function clause is_CSR_defined(0x143) = extensionEnabled(Ext_S) // stval
+function clause is_CSR_defined(0x140) = currentlyEnabled(Ext_S) // sscratch
+function clause is_CSR_defined(0x142) = currentlyEnabled(Ext_S) // scause
+function clause is_CSR_defined(0x143) = currentlyEnabled(Ext_S) // stval
 
 val get_sscratch : (unit) -> xlenbits
 val set_sscratch : (xlenbits) -> unit

@@ -35,8 +35,8 @@ function pte_is_invalid(pte_flags : PTE_Flags, pte_ext : option(PTE_Ext)) -> boo
       Some(pte_ext) =>
         // These bits must be zero unless the relevant extension is supported
         // and this is a leaf node.
-          pte_ext[N]    != zeros() & (not(extensionEnabled(Ext_Svnapot)) | pte_is_ptr(pte_flags))
-        | pte_ext[PBMT] != zeros() & (not(extensionEnabled(Ext_Svpbmt))  | pte_is_ptr(pte_flags))
+          pte_ext[N]    != zeros() & (not(currentlyEnabled(Ext_Svnapot)) | pte_is_ptr(pte_flags))
+        | pte_ext[PBMT] != zeros() & (not(currentlyEnabled(Ext_Svpbmt))  | pte_is_ptr(pte_flags))
         // PBMT 0b11 is always reserved. This applies even without PBMT support.
         | pte_ext[PBMT] == 0b11
         // Reserved bits must be 0.

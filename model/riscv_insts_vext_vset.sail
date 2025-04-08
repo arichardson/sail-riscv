@@ -98,7 +98,7 @@ union clause ast = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx
 
 mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
   <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx) -> Retired = {
   let vtype_new : Vtype = struct { bits = vtype_bits_new };
@@ -152,7 +152,7 @@ mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
 
 mapping clause encdec = VSETVL_TYPE(rs2, rs1, rd)
   <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 function clause execute VSETVL_TYPE(rs2, rs1, rd) = process_vset(X(rs2), get_avl(rd, rs1), rd)
 
@@ -162,8 +162,8 @@ mapping clause assembly = VSETVL_TYPE(rs2, rs1, rd)
 /* ****************************** vsetvli ******************************* */
 union clause ast = VSETVLI_TYPE : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
-mapping clause encdec = VSETVLI_TYPE(ma, ta, sew, lmul, rs1, rd)                           if extensionEnabled(Ext_V)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if extensionEnabled(Ext_V)
+mapping clause encdec = VSETVLI_TYPE(ma, ta, sew, lmul, rs1, rd)                           if currentlyEnabled(Ext_V)
+  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if currentlyEnabled(Ext_V)
 
 function clause execute VSETVLI_TYPE(ma, ta, sew, lmul, rs1, rd) =
   process_vset(0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul, get_avl(rd, rs1), rd)
@@ -176,7 +176,7 @@ union clause ast = VSETIVLI_TYPE : ( bits(1), bits(1), bits(3), bits(3), bits(5)
 
 mapping clause encdec = VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd)
   <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 function clause execute VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd) =
   process_vset(0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul, Some(unsigned(uimm)), rd)

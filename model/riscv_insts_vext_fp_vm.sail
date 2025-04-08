@@ -24,7 +24,7 @@ mapping encdec_fvvmfunct6 : fvvmfunct6 <-> bits(6) = {
 
 mapping clause encdec = FVVMTYPE(funct6, vm, vs2, vs1, vd)
   <-> encdec_fvvmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_vreg(vs1) @ 0b001 @ encdec_vreg(vd) @ 0b1010111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -37,7 +37,7 @@ function clause execute(FVVMTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_vmreg_overlap(vs1, vd, LMUL_pow)) |
       misaligned_vreg(vs2, LMUL_pow) |
       misaligned_vreg(vs1, LMUL_pow) |
-      (SEW == 16 & not(extensionEnabled(Ext_Zvfh)))
+      (SEW == 16 & not(currentlyEnabled(Ext_Zvfh)))
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
@@ -94,7 +94,7 @@ mapping encdec_fvfmfunct6 : fvfmfunct6 <-> bits(6) = {
 
 mapping clause encdec = FVFMTYPE(funct6, vm, vs2, rs1, vd)
   <-> encdec_fvfmfunct6(funct6) @ vm @ encdec_vreg(vs2) @ encdec_freg(rs1) @ 0b101 @ encdec_vreg(vd) @ 0b1010111
-  when extensionEnabled(Ext_V)
+  when currentlyEnabled(Ext_V)
 
 function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   let rm_3b    = fcsr[FRM];
@@ -105,7 +105,7 @@ function clause execute(FVFMTYPE(funct6, vm, vs2, rs1, vd)) = {
   if  illegal_fp_vd_unmasked(SEW, rm_3b) |
       not(valid_vmreg_overlap(vs2, vd, LMUL_pow)) |
       misaligned_vreg(vs2, LMUL_pow) |
-      (SEW == 16 & not(extensionEnabled(Ext_Zvfh)))
+      (SEW == 16 & not(currentlyEnabled(Ext_Zvfh)))
   then { handle_illegal(); return RETIRE_FAIL };
   assert(SEW != 8);
 
