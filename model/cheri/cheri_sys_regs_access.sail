@@ -25,7 +25,7 @@ function tvecc_vector_range_check(tvecc: Capability) -> Capability = {
   if Mk_Mtvec(tvecc.address)[Mode] != trapVectorMode_bits(TV_Vector) then return tvecc;
 
   // If in vectored mode, also check maximum vector address
-  let max_interrupt = if extensionEnabled(Ext_Sscofpmf) then Local_Counter_Overflow else I_M_External;
+  let max_interrupt = if currentlyEnabled(Ext_Sscofpmf) then Local_Counter_Overflow else I_M_External;
   let max_mcause = [ Mk_Mcause(zeros()) with
     Cause = zero_extend(interruptType_to_bits(max_interrupt)),
     IsInterrupt = 0b1,

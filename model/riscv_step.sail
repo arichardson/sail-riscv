@@ -59,7 +59,7 @@ function step(step_no : int) -> bool = {
               if   get_config_print_instr()
               then ext_print_instr(step_no, ast, h);
               /* check for RVC once here instead of every RVC execute clause. */
-              if extensionEnabled(Ext_Zca) then {
+              if currentlyEnabled(Ext_Zca) then {
                 nextPC = PC + 2;
                 (execute(ast), true)
               } else {

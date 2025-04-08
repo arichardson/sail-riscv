@@ -49,7 +49,7 @@ function clause execute(JAL_capmode(imm, cd)) = {
   } else if not(inCapBounds(PCC, newPC, min_instruction_bytes())) then {
     handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros()));
     RETIRE_FAIL
-  } else if newPC[1] == bitone & not(extensionEnabled(Ext_Zca)) then {
+  } else if newPC[1] == bitone & not(currentlyEnabled(Ext_Zca)) then {
     handle_mem_exception(Virtaddr(newPC), E_Fetch_Addr_Align());
     RETIRE_FAIL
   } else {
@@ -99,7 +99,7 @@ function clause execute(JALR_capmode(imm, cs1, cd)) = {
   } else if not(inCapBounds(cs1_val, newPC, min_instruction_bytes())) then {
     handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros()));
     RETIRE_FAIL
-  } else if newPC[1] == bitone & not(extensionEnabled(Ext_Zca)) then {
+  } else if newPC[1] == bitone & not(currentlyEnabled(Ext_Zca)) then {
     handle_mem_exception(Virtaddr(newPC), E_Fetch_Addr_Align());
     RETIRE_FAIL
   } else {
@@ -1104,14 +1104,14 @@ mapping clause encdec = StoreCapImm(cs2, rs1, off7 @ off5)                      
 mapping clause assembly = LoadCapImm(cd, rs1, offset)   <-> "lc" ^ spc() ^ cap_reg_name(cd)  ^ sep() ^ hex_bits_12(offset) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 mapping clause assembly = StoreCapImm(cs2, rs1, offset) <-> "sc" ^ spc() ^ cap_reg_name(cs2) ^ sep() ^ hex_bits_12(offset) ^ opt_spc() ^ "(" ^ opt_spc() ^ reg_name(rs1) ^ opt_spc() ^ ")"
 
-mapping clause encdec = LoadResCap(cd, rs1, aq, rl)                                                            if cheri_registers_enabled() & extensionEnabled(Ext_Zalrsc)
-  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0101111 if cheri_registers_enabled() & extensionEnabled(Ext_Zalrsc) /* lr.c */
+mapping clause encdec = LoadResCap(cd, rs1, aq, rl)                                                            if cheri_registers_enabled() & currentlyEnabled(Ext_Zalrsc)
+  <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0101111 if cheri_registers_enabled() & currentlyEnabled(Ext_Zalrsc) /* lr.c */
 
-mapping clause encdec = StoreCondCap(rd, cs2, rs1, aq, rl)                                                             if cheri_registers_enabled() & extensionEnabled(Ext_Zalrsc)
-  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0101111 if cheri_registers_enabled() & extensionEnabled(Ext_Zalrsc) /* sc.c */
+mapping clause encdec = StoreCondCap(rd, cs2, rs1, aq, rl)                                                             if cheri_registers_enabled() & currentlyEnabled(Ext_Zalrsc)
+  <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(rd) @ 0b0101111 if cheri_registers_enabled() & currentlyEnabled(Ext_Zalrsc) /* sc.c */
 
-mapping clause encdec = AMOSwapCap(cd, cs2, rs1, aq, rl)                                                               if cheri_registers_enabled() & extensionEnabled(Ext_Zaamo)
-  <-> 0b00001 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0101111 if cheri_registers_enabled() & extensionEnabled(Ext_Zaamo) /* amoswap.c */
+mapping clause encdec = AMOSwapCap(cd, cs2, rs1, aq, rl)                                                               if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo)
+  <-> 0b00001 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0101111 if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo) /* amoswap.c */
 
 mapping clause assembly = LoadResCap(cd, rs1, aq, rl)        <-> "lr.c"      ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1)
 mapping clause assembly = StoreCondCap(rd, cs2, rs1, aq, rl) <-> "sc.c"      ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd)     ^ sep() ^ cap_reg_name(cs2) ^ sep() ^ reg_name(rs1)
@@ -1126,13 +1126,13 @@ mapping clause assembly = AMOSwapCap(cd, cs2, rs1, aq, rl)   <-> "amoswap.c" ^ m
   adding the decodings here.
 */
 mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
-      if extensionEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
+      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
   <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-      if extensionEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
+      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
-      if extensionEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
+      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
   <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-      if extensionEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
+      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
 
 /*
  * Encoding/assembly mappings for capmode specific instructions. This does not

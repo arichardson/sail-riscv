@@ -9,14 +9,14 @@
 /* ****************************************************************** */
 union clause ast = ZBA_RTYPEUW_capmode : (regidx, regidx, regidx, bropw_zba)
 
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_ADDUW)           if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(cd) @ 0b0111011 if extensionEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH1ADDUW)        if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0111011 if extensionEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH2ADDUW)        if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0111011 if extensionEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH3ADDUW)        if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0111011 if extensionEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_ADDUW)           if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH1ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH2ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH3ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
 
 mapping clause assembly = ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)
   <-> zba_rtypeuw_mnemonic(op) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1) ^ sep() ^ cap_reg_name(cs2)
@@ -62,10 +62,10 @@ function clause execute (ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)) = {
 union clause ast = ZBA_SH4ADDUW : (regidx, regidx, regidx)
 union clause ast = ZBA_SH4ADDUW_capmode : (regidx, regidx, regidx)
 
-mapping clause encdec = ZBA_SH4ADDUW(cs2, rs1, cd)                                       if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(cd) @ 0b0111011 if extensionEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_SH4ADDUW_capmode(cs2, rs1, cd)                       if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(cd) @ 0b0111011 if extensionEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec = ZBA_SH4ADDUW(cs2, rs1, cd)                                       if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_SH4ADDUW_capmode(cs2, rs1, cd)                       if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
 
 mapping clause assembly = ZBA_SH4ADDUW(rs2, rs1, rd)
   <-> "sh4add.uw" ^ spc() ^     reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
@@ -114,12 +114,12 @@ function clause execute (ZBA_SH4ADDUW_capmode(cs2, rs1, cd)) = {
 /* ****************************************************************** */
 union clause ast = ZBA_RTYPE_capmode : (regidx, regidx, regidx, brop_zba)
 
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH1ADD)            if extensionEnabled(Ext_Zba)
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0110011 if extensionEnabled(Ext_Zba)
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH2ADD)            if extensionEnabled(Ext_Zba)
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0110011 if extensionEnabled(Ext_Zba)
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH3ADD)            if extensionEnabled(Ext_Zba)
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0110011 if extensionEnabled(Ext_Zba)
+mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH1ADD)            if currentlyEnabled(Ext_Zba)
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
+mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH2ADD)            if currentlyEnabled(Ext_Zba)
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
+mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH3ADD)            if currentlyEnabled(Ext_Zba)
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
 
 mapping clause assembly = ZBA_RTYPE_capmode(cs2, rs1, cd, op)
   <-> zba_rtype_mnemonic(op) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1) ^ sep() ^ cap_reg_name(cs2)
@@ -152,10 +152,10 @@ function clause execute (ZBA_RTYPE_capmode(cs2, rs1, cd, op)) = {
 union clause ast = ZBA_SH4ADD : (regidx, regidx, regidx)
 union clause ast = ZBA_SH4ADD_capmode : (regidx, regidx, regidx)
 
-mapping clause encdec = ZBA_SH4ADD(rs2, rs1, rd)                                         if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011 if extensionEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_SH4ADD_capmode(cs2, rs1, cd)                         if extensionEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(cd) @ 0b0110011 if extensionEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec = ZBA_SH4ADD(rs2, rs1, rd)                                         if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0010000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011 if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_SH4ADD_capmode(cs2, rs1, cd)                         if currentlyEnabled(Ext_Zba) & xlen == 64
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba) & xlen == 64
 
 mapping clause assembly = ZBA_SH4ADD(rs2, rs1, rd)
   <-> "sh4add" ^ spc() ^ reg_name(rd)     ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
