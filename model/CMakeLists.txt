@@ -94,6 +94,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zicboz.sail"
                 "riscv_insts_zvbb.sail"
                 "riscv_insts_zvbc.sail"
+                "riscv_insts_zvknhab.sail"
                 "cheri/cheri_insts_begin.sail"
                 "cheri/cheri_insts.sail"
                 "cheri/cheri_insts_cext.sail"
@@ -213,6 +214,7 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.
                 "riscv_types_kext.sail"
+                "riscv_zvk_utils.sail"
             )
 
             if (variant STREQUAL "rvfi")
