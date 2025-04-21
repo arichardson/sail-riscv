@@ -63,7 +63,7 @@ function matching_pma(pmas : list(PMA_Region), Physaddr(addr) : physaddr, width 
   match pmas {
     [||] => None(),
     pma :: rest => {
-      if range_subset(addr, addr + width, physaddr_bits(pma.base), physaddr_bits(pma.base) + pma.size)
+      if range_subset(addr, addr + width, bits_of_physaddr(pma.base), bits_of_physaddr(pma.base) + pma.size)
       then Some(pma)
       else matching_pma(rest, Physaddr(addr), width)
     },
@@ -89,7 +89,7 @@ function pma_attributes_to_str(attr : PMA) -> string =
   (if attr.supportsCboZero then " supportsCboZero" else "")
 
 function pma_region_to_str(region : PMA_Region) -> string =
-  "base: " ^ bits_str(physaddr_bits(region.base)) ^ " size: " ^ bits_str(region.size)
+  "base: " ^ bits_str(bits_of_physaddr(region.base)) ^ " size: " ^ bits_str(region.size)
     ^ pma_attributes_to_str(region.attributes)
 
 overload to_str = {pma_attributes_to_str, pma_region_to_str, atomic_support_name, reservability_name}
