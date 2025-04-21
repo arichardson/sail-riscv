@@ -707,7 +707,7 @@ function clause execute (LoadResCap(cd, rs1_cs1, aq, rl)) = {
               if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
                 RETIRE_FAIL(Translate_Exception(vaddr, E_Load_Page_Fault(), { ext_ptw with cheri_page_fault = PageFault_Cheri }))
               } else {
-                load_reservation(physaddr_bits(addr));
+                load_reservation(bits_of_physaddr(addr));
                 let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
                 C(cd) = legalizeLoadedPermissions(cr, auth_val);
                 RETIRE_SUCCESS
@@ -870,7 +870,7 @@ function clause execute StoreCondCap(rd, cs2, rs1_cs1, aq, rl) = {
       match translateAddr(vaddr, Write(if cs2_val.tag then Tagged else Data)) {
         TR_Failure(e, ext_ptw)    => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
         TR_Address(addr, pbmt, _) => {
-          if not(match_reservation(physaddr_bits(addr))) then {
+          if not(match_reservation(bits_of_physaddr(addr))) then {
             /* cannot happen in rmem */
             X(rd) = zero_extend(0b1);
             cancel_reservation();

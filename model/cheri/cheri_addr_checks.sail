@@ -147,7 +147,7 @@ function ext_data_get_addr(base_reg : regidx, offset : xlenbits, acc : AccessTyp
     ReadWrite(_, _)   => internal_error(__FILE__, __LINE__, "ext_data_get_addr for ReadWrite(...)")
   };
 
-  let newAddr = virtaddr_bits(newAddr);
+  let newAddr = bits_of_virtaddr(newAddr);
 
   let (any_byte_in_bounds, exc_addr): (bool, xlenbits) = match acc {
     Cache(CleanFlush) => (true, newAddr - offset),

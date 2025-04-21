@@ -37,7 +37,7 @@ function translateRange(
   typ : AccessType(ext_access_type),
 ) -> result(translation2, VMemException) = {
   // Widths of each access.
-  let (width0, width1) = splitAccessWidths(virtaddr_bits(vaddr), width);
+  let (width0, width1) = splitAccessWidths(bits_of_virtaddr(vaddr), width);
   assert(width0 + width1 == width);
 
   // Translate the first address, return failure if it fails.
@@ -49,7 +49,7 @@ function translateRange(
   // If the second access exists then we need to translate its address.
   let tr1 = if width1 != 0 then {
     // Second address to translate is at the start of the next page (wrapped).
-    let vaddr1 = Virtaddr(virtaddr_bits(vaddr) + width0);
+    let vaddr1 = Virtaddr(bits_of_virtaddr(vaddr) + width0);
     let tr1 : translation = match translateAddr(vaddr1, typ) {
       TR_Address(paddr, pbmt, ext_ptw) => (paddr, pbmt, ext_ptw),
       TR_Failure(exc, ext_ptw) => return Err(vaddr1, exc, ext_ptw),
@@ -89,7 +89,7 @@ function vmem_read_priv_meta forall 'n, 0 < 'n < max_mem_access . (
           Err(e) => Err(vaddr, e, ext_ptw),
         },
         ((paddr0, pbmt0, ext_ptw0), Some((paddr1, pbmt1, ext_ptw1))) => {
-          let (width0 as int('w0), width1 as int('w1)) = splitAccessWidths(physaddr_bits(paddr0), width);
+          let (width0 as int('w0), width1 as int('w1)) = splitAccessWidths(bits_of_physaddr(paddr0), width);
           assert(width0 > 0 & width1 > 0);
 
           let (val0, meta0) : (bits(8 * 'w0), mem_meta) = match checked_mem_read(typ, priv, pbmt0, paddr0, width0, aq, rel, res, meta) {
@@ -98,7 +98,7 @@ function vmem_read_priv_meta forall 'n, 0 < 'n < max_mem_access . (
           };
           let (val1, meta1) : (bits(8 * 'w1), mem_meta) = match checked_mem_read(typ, priv, pbmt1, paddr1, width1, aq, rel, res, meta) {
             Ok(v, meta) => (v, meta),
-            Err(e) => return Err(Virtaddr(virtaddr_bits(vaddr) + width0), e, ext_ptw1),
+            Err(e) => return Err(Virtaddr(bits_of_virtaddr(vaddr) + width0), e, ext_ptw1),
           };
           // TODO: How should we combine meta0 and meta1?
           Ok((val1 @ val0, meta0))
@@ -137,7 +137,7 @@ function vmem_write_translate forall 'n, 0 < 'n <= max_mem_access . (
           Err(e) => Err(vaddr, e, ext_ptw0),
         },
         ((paddr0, _, ext_ptw0), Some((paddr1, _, ext_ptw1))) => {
-          let (width0, width1) = splitAccessWidths(physaddr_bits(paddr0), width);
+          let (width0, width1) = splitAccessWidths(bits_of_physaddr(paddr0), width);
           assert(width0 > 0 & width1 > 0);
 
           match mem_write_ea(paddr0, width0, aq, rl, con) {
@@ -146,7 +146,7 @@ function vmem_write_translate forall 'n, 0 < 'n <= max_mem_access . (
           };
           match mem_write_ea(paddr1, width1, aq, rl, con) {
             Ok() => (),
-            Err(e) => return Err(Virtaddr(virtaddr_bits(vaddr) + width0), e, ext_ptw1),
+            Err(e) => return Err(Virtaddr(bits_of_virtaddr(vaddr) + width0), e, ext_ptw1),
           };
           Ok(struct { vaddr, tr, width, typ, aq, rl, con })
         },
@@ -169,7 +169,7 @@ function vmem_write_value_priv_meta forall 'n, 0 < 'n <= max_mem_access . (
       Err(e) => Err(vaddr, e, ext_ptw0),
     },
     ((paddr0, pbmt0, ext_ptw0), Some((paddr1, pbmt1, ext_ptw1))) => {
-      let (width0, width1) = splitAccessWidths(physaddr_bits(paddr0), width);
+      let (width0, width1) = splitAccessWidths(bits_of_physaddr(paddr0), width);
       assert(width0 > 0 & width1 > 0);
 
       let res0 : bool = match checked_mem_write(pbmt0, paddr0, width0, value[8 * width0 - 1 .. 0], typ, priv, aq, rl, con, meta) {

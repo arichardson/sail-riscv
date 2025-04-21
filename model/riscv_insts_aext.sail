@@ -87,13 +87,13 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
       /* "LR faults like a normal load, even though it's in the AMO major opcode space."
         * - Andrew Waterman, isa-dev, 10 Jul 2018.
         */
-      if not(is_aligned(virtaddr_bits(vaddr), width))
+      if not(is_aligned(bits_of(vaddr), width))
       then RETIRE_FAIL(Memory_Exception(vaddr, E_Load_Addr_Align()))
       else match translateAddr(vaddr, Read(Data)) {
         TR_Failure(e, ext_ptw)     => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
         TR_Address(paddr, pbmt, _) =>
           match mem_read(Read(Data), pbmt, paddr, width_bytes, aq, aq & rl, true) {
-            Ok(result) => { load_reservation(physaddr_bits(paddr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
+            Ok(result) => { load_reservation(bits_of(paddr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
             Err(e)     => RETIRE_FAIL(Memory_Exception(vaddr, e))
           },
       }
@@ -124,7 +124,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   let res : ExecutionResult(Retire_Failure) = match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
     Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned(virtaddr_bits(vaddr), width))
+      if not(is_aligned(bits_of(vaddr), width))
       then { RETIRE_FAIL(Memory_Exception(vaddr, E_SAMO_Addr_Align())) }
       else {
         // SC must always be aligned so it can never span a page, which means
@@ -141,7 +141,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
             match phys_access_check(typ, priv, pbmt, addr, width_bytes, true) {
               Some(e) => { RETIRE_FAIL(Memory_Exception(vaddr, e)) },
               None() => {
-                if not(speculate_conditional()) | not(match_reservation(physaddr_bits(addr))) then {
+                if not(speculate_conditional()) | not(match_reservation(bits_of(addr))) then {
                   // Spurious failure (this is allowed), or the reservation
                   // address does not match.
                   X(rd) = zero_extend(0b1); RETIRE_SUCCESS
@@ -211,7 +211,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
     Ext_DataAddr_Error(e)  => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
     Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned(virtaddr_bits(vaddr), width))
+      if not(is_aligned(bits_of(vaddr), width))
       then RETIRE_FAIL(Memory_Exception(vaddr, E_SAMO_Addr_Align()))
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, ext_ptw)    => RETIRE_FAIL(Translate_Exception(vaddr, e, ext_ptw)),
