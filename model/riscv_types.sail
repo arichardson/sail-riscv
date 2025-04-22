@@ -128,7 +128,7 @@ union AccessType ('a : Type) = {
   Write           : 'a,
   // (Read, Write)
   ReadWrite       : ('a, 'a),
-  Execute         : unit,
+  InstructionFetch         : unit,
   Cache           : CacheAccessType,
 }
 

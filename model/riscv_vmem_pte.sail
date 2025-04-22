@@ -52,7 +52,7 @@ function updated_pte_bits forall 'pte_size, 'pte_size in {32, 64} . (
 ) -> option(bits('pte_size)) = {
 
   let is_write : bool = match a {
-    Execute()       => false,
+    InstructionFetch()       => false,
     Read(_)         => false,
     Write(_)        => true,
     ReadWrite(_, _) => true,
@@ -95,7 +95,7 @@ function pte_rwxu_permission_ok(
     (ReadWrite(_), User)       => (pte[U] == 0b1)
                                   & (pte[W] == 0b1)
                                   & ((pte[R] == 0b1) | ((pte[X] == 0b1) & mxr)),
-    (Execute(),    User)       => (pte[U] == 0b1) & (pte[X] == 0b1),
+    (InstructionFetch(), User) => (pte[U] == 0b1) & (pte[X] == 0b1),
     (Cache(Zero),  User)       => (pte[U] == 0b1) & (pte[W] == 0b1),
     (Read(_),      Supervisor) => ((pte[U] == 0b0) | do_sum)
                                   & ((pte[R] == 0b1) | ((pte[X] == 0b1) & mxr)),
@@ -105,7 +105,7 @@ function pte_rwxu_permission_ok(
                                   & (pte[W] == 0b1)
                                   & ((pte[R] == 0b1)
                                      | ((pte[X] == 0b1) & mxr)),
-    (Execute(),    Supervisor) => (pte[U] == 0b0) & (pte[X] == 0b1),
+    (InstructionFetch(), Supervisor) => (pte[U] == 0b0) & (pte[X] == 0b1),
     (Cache(Zero),  Supervisor) => ((pte[U] == 0b0) | do_sum)
                                   & (pte[W] == 0b1),
     (_,            Machine)    => internal_error(__FILE__, __LINE__,

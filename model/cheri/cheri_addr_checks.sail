@@ -141,7 +141,7 @@ function ext_data_get_addr(base_reg : regidx, offset : xlenbits, acc : AccessTyp
     Cache(CleanFlush) => (canR(auth_val), canW(auth_val), true),
     Cache(Inval)      => (canR(auth_val), canW(auth_val), canASR(auth_val)),
     Cache(Zero)       => (true          , canW(auth_val), true),
-    Execute()         => internal_error(__FILE__, __LINE__, "ext_data_get_addr for Execute"),
+    InstructionFetch() => internal_error(__FILE__, __LINE__, "ext_data_get_addr for Execute"),
     Read(Tagged)      => internal_error(__FILE__, __LINE__, "ext_data_get_addr for Read(Tagged)"),
     Write(Tagged)     => internal_error(__FILE__, __LINE__, "ext_data_get_addr for Write(Tagged)"),
     ReadWrite(_, _)   => internal_error(__FILE__, __LINE__, "ext_data_get_addr for ReadWrite(...)")
