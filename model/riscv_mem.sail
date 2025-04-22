@@ -75,7 +75,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     None()   => None()
   }) : option((bits(8 * 'n), mem_meta));
   match (t, result) {
-    (Execute(),  None()) => Err(E_Fetch_Access_Fault()),
+    (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
     (_,      Some(v, m)) => { if   get_config_print_mem()
@@ -134,7 +134,7 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
       } else {
         // Check read/write/execute permissions.
         let canAccess : bool = match accTy {
-          Execute()       => attributes.executable,
+          InstructionFetch() => attributes.executable,
           Read(_)         => attributes.readable & not(res_or_con & attributes.reservability == RsrvNone),
           Write(_)        => attributes.writable & not(res_or_con & attributes.reservability == RsrvNone),
           ReadWrite(_, _) => attributes.readable &

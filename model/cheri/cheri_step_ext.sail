@@ -68,8 +68,8 @@ function ext_reset_misa() -> unit = ()
 
 function ext_fetch_hook(f : FetchResult) -> FetchResult = f
 
-function ext_fetch_mem_read_hi(paddr : physaddr, pbmt : PBMT) -> MemoryOpResult(half) = mem_read(Execute(), pbmt, paddr, 2, false, false, false)
-function ext_fetch_mem_read_lo(paddr : physaddr, pbmt : PBMT) -> MemoryOpResult(half) = mem_read(Execute(), pbmt, paddr, 2, false, false, false)
+function ext_fetch_mem_read_hi(paddr : physaddr, pbmt : PBMT) -> MemoryOpResult(half) = mem_read(InstructionFetch(), pbmt, paddr, 2, false, false, false)
+function ext_fetch_mem_read_lo(paddr : physaddr, pbmt : PBMT) -> MemoryOpResult(half) = mem_read(InstructionFetch(), pbmt, paddr, 2, false, false, false)
 
 function ext_pre_step_hook()  -> unit = ()
 function ext_post_step_hook() -> unit = ()
