@@ -39,10 +39,7 @@ struct PTW_Output('v : Int), is_sv_mode('v) = {
 }
 
 // PRIVATE
-union PTW_Result('v : Int), is_sv_mode('v) = {
-  PTW_Success : (PTW_Output('v), ext_ptw),
-  PTW_Failure : (PTW_Error, ext_ptw),
-}
+type PTW_Result('v : Int), is_sv_mode('v) = result((PTW_Output('v), ext_ptw), (PTW_Error, ext_ptw))
 
 // ****************************************************************
 // Page Table Walk (PTW)
@@ -94,14 +91,14 @@ function pt_walk(
 
   // Read this-level PTE from mem (Step 2 of VATP)
   match read_pte(pte_addr, 2 ^ log_pte_size_bytes) {
-    Err(_)  => PTW_Failure(PTW_Access(), ext_ptw),
+    Err(_)  => Err(PTW_Access(), ext_ptw),
     Ok(pte) => {
       let pte_flags = Mk_PTE_Flags(pte[7 .. 0]);
       let pte_ext   = ext_bits_of_PTE(pte);
 
       if pte_is_invalid(pte_flags, pte_ext) then
         // Step 3 of VATP.
-        PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
+        Err(PTW_Invalid_PTE(), ext_ptw)
       else {
         // Step 4 of VATP.
         let ppn = PPN_of_PTE(pte); // 22 or 44.
@@ -113,7 +110,7 @@ function pt_walk(
             pt_walk(sv_width, vpn, ac, priv, mxr, do_sum, ppn, level - 1, global, ext_ptw)
           else
             // level 0 PTE, but contains a pointer instead of a leaf
-            PTW_Failure(PTW_Invalid_PTE(), ext_ptw)
+            Err(PTW_Invalid_PTE(), ext_ptw)
         } else {
           // Leaf PTE (Step 5 of VATP).
           let ppn_size_bits = if 'v == 32 then 10 else 9;
@@ -121,7 +118,7 @@ function pt_walk(
             // Check for misaligned superpage.
             let low_bits = ppn_size_bits * level;
             if   ppn[low_bits - 1 .. 0] != zeros()
-            then return PTW_Failure(PTW_Misaligned(), ext_ptw);
+            then return Err(PTW_Misaligned(), ext_ptw);
           };
           // Steps 6, 7 (TODO: shadow stack protection), 8 of VATP.
           let (ok, ext_ptw) = pte_permission_ok(ac, priv, mxr, do_sum, pte_flags,
@@ -135,9 +132,9 @@ function pt_walk(
             } else {
               ppn
             };
-            PTW_Success(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, global=global}, ext_ptw)
+            Ok(struct {ppn=ppn, pte=pte, pteAddr=pte_addr, level=level, global=global}, ext_ptw)
           } else {
-            PTW_Failure(PTW_No_Permission(), ext_ptw)
+            Err(PTW_No_Permission(), ext_ptw)
           }
         }
       }
@@ -274,8 +271,8 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
   let ptw_result = pt_walk(sv_width, vpn, ac, priv, mxr, do_sum,
                            base_ppn, initial_level, false, ext_ptw);
   match ptw_result {
-    PTW_Failure(f, ext_ptw) => TR_Failure(f, ext_ptw),
-    PTW_Success(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
+    Err(f, ext_ptw) => TR_Failure(f, ext_ptw),
+    Ok(struct {ppn, pte, pteAddr, level, global}, ext_ptw) => {
       let ext_pte = ext_bits_of_PTE(pte);
 
       let pbmt = get_pte_pbmt(ext_pte);
