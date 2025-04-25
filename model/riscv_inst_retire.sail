@@ -6,22 +6,27 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-/* Reasons an instruction retire might fail or be incomplete. */
+// Return value from `execute()` function.
+union ExecutionResult = {
+  // Successfully retired.
+  Retire_Success                 : unit,
 
-union Retire_Failure = {
-  // standard reasons
-  Illegal_Instruction            : unit,
+  // WFI executed, which may or may not retire
+  // depending on the configuration.
   Wait_For_Interrupt             : unit,
+
+  // Did not retire for a standard reason.
+  Illegal_Instruction            : unit,
   Trap                           : (Privilege, ctl_result, xlenbits),
   Memory_Exception               : (virtaddr, ExceptionType),
   Translate_Exception            : (virtaddr, ExceptionType, ext_ptw),
+  CHERI_Exception                : (CapCheckType, CapEx, virtaddr),
 
-  // reasons from external extensions
+  // Did not retire for custom reason.
   Ext_CSR_Check_Failure          : ext_csr_exc_type,
   Ext_ControlAddr_Check_Failure  : ext_control_addr_error,
   Ext_DataAddr_Check_Failure     : ext_data_addr_error,
   Ext_XRET_Priv_Failure          : unit,
-  CHERI_Exception            : (CapCheckType, CapEx, virtaddr),
 }
 
 // To ease the introduction of `Retire_Failure`, this global
@@ -29,4 +34,4 @@ union Retire_Failure = {
 // RETIRE_SUCCESS enum value so that we don't have to immediately
 // update all the places RETIRE_SUCCESS was used.
 
-let RETIRE_SUCCESS : ExecutionResult(Retire_Failure) = RETIRE_OK()
+let RETIRE_SUCCESS : ExecutionResult = Retire_Success()
