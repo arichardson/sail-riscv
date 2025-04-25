@@ -63,7 +63,7 @@ function cbop_priv_check(p: Privilege) -> checked_cbop = {
   }
 }
 
-val process_clean_inval : (regidx, cbop_zicbom, cbop_zicbom) -> ExecutionResult(Retire_Failure)
+val process_clean_inval : (regidx, cbop_zicbom, cbop_zicbom) -> ExecutionResult
 function process_clean_inval(rs1, cbop, cbop_orig) = {
   let rs1_val = X(rs1);
   let cache_block_size_exp = plat_cache_block_size_exp();
@@ -81,7 +81,7 @@ function process_clean_inval(rs1, cbop, cbop_orig) = {
   };
 
   match ext_data_get_addr(rs1, negative_offset, acc_type, cache_block_size) {
-    Ext_DataAddr_Error(e) => RETIRE_FAIL(Ext_DataAddr_Check_Failure(e)),
+    Ext_DataAddr_Error(e) => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
       let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {
         TR_Address(paddr, pbmt, _) => {
@@ -132,7 +132,7 @@ function process_clean_inval(rs1, cbop, cbop_orig) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          RETIRE_FAIL(Memory_Exception(vaddr - negative_offset, e))
+          Memory_Exception(vaddr - negative_offset, e)
         }
       }
     }
@@ -142,16 +142,16 @@ function process_clean_inval(rs1, cbop, cbop_orig) = {
 function clause execute(ZICBOM(CBO_CLEAN, rs1)) =
   if   cbo_clean_flush_enabled(cur_privilege())
   then process_clean_inval(rs1, CBO_CLEAN, CBO_CLEAN)
-  else RETIRE_FAIL(Illegal_Instruction())
+  else Illegal_Instruction()
 
 function clause execute(ZICBOM(CBO_FLUSH, rs1)) =
   if   cbo_clean_flush_enabled(cur_privilege())
   then process_clean_inval(rs1, CBO_FLUSH, CBO_FLUSH)
-  else RETIRE_FAIL(Illegal_Instruction())
+  else Illegal_Instruction()
 
 function clause execute(ZICBOM(CBO_INVAL, rs1)) =
   match cbop_priv_check(cur_privilege()) {
-    CBOP_ILLEGAL         => RETIRE_FAIL(Illegal_Instruction()),
+    CBOP_ILLEGAL         => Illegal_Instruction(),
     CBOP_ILLEGAL_VIRTUAL => internal_error(__FILE__, __LINE__, "unimplemented"),
     CBOP_INVAL_INVAL     => process_clean_inval(rs1, CBO_INVAL, CBO_INVAL),
     CBOP_INVAL_FLUSH     => process_clean_inval(rs1, CBO_FLUSH, CBO_INVAL),
