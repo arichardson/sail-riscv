@@ -166,22 +166,6 @@ bool sys_enable_pbmt(unit u) {
   return true;
 }
 
-bool sys_enable_sv32(unit u) {
-  return true;
-}
-
-bool sys_enable_sv39(unit u) {
-  return true;
-}
-
-bool sys_enable_sv48(unit u) {
-  return true;
-}
-
-bool sys_enable_sv57(unit u) {
-  return true;
-}
-
 bool sys_enable_zkr(unit u) {
   return true;
 }

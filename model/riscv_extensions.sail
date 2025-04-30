@@ -212,6 +212,16 @@ function clause hartSupports(Ext_Svnapot) = config extensions.Svnapot.supported
 enum clause extension = Ext_Svpbmt
 function clause hartSupports(Ext_Svpbmt) = config extensions.Svpbmt.supported
 
+// Supervisor-Level Address Translation Modes
+enum clause extension = Ext_Svbare
+enum clause extension = Ext_Sv32
+function clause hartSupports(Ext_Sv32) = config extensions.Sv32.supported : bool & (xlen == 32)
+enum clause extension = Ext_Sv39
+function clause hartSupports(Ext_Sv39) = config extensions.Sv39.supported : bool & (xlen == 64)
+enum clause extension = Ext_Sv48
+function clause hartSupports(Ext_Sv48) = config extensions.Sv48.supported : bool & (xlen == 64)
+enum clause extension = Ext_Sv57
+function clause hartSupports(Ext_Sv57) = config extensions.Sv57.supported : bool & (xlen == 64)
 // Cycle and Instret Privilege Mode Filtering
 enum clause extension = Ext_Smcntrpmf
 function clause hartSupports(Ext_Smcntrpmf) = config extensions.Smcntrpmf.supported
