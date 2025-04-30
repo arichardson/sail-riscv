@@ -196,11 +196,23 @@
     "Svinval": {
       "supported": true
     },
-        "Svnapot" : {
-            "supported" : false
-        },
-        "Svpbmt" : {
-            "supported" : false
-        }
+    "Sv32": {
+      "supported": true
+    },
+    "Sv39": {
+      "supported": true
+    },
+    "Sv48": {
+      "supported": true
+    },
+    "Sv57": {
+      "supported": true
+    },
+    "Svnapot" : {
+      "supported" : false
+    },
+    "Svpbmt" : {
+      "supported" : false
     }
+  }
 }

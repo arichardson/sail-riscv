@@ -134,12 +134,6 @@ val sys_pa_bits = pure "sys_pa_bits" : unit -> range(13, if xlen == 32 then 34 e
 // https://github.com/rems-project/sail/issues/471
 val sys_asid_bits = pure "sys_asid_bits" : unit -> range(1, if xlen == 32 then 9 else 16)
 
-/* Which virtual addressing modes are supported. Note Sv57 is not implemented yet. */
-val sys_enable_sv32 = pure "sys_enable_sv32" : unit -> bool
-val sys_enable_sv39 = pure "sys_enable_sv39" : unit -> bool
-val sys_enable_sv48 = pure "sys_enable_sv48" : unit -> bool
-val sys_enable_sv57 = pure "sys_enable_sv57" : unit -> bool
-
 val sys_enable_tlb = pure "sys_enable_tlb" : unit -> bool
 
 // maskmax6 value for Sdtrig
@@ -189,8 +183,18 @@ function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1
 // Note the model doesn't support hypervisor mode yet.
 function clause currentlyEnabled(Ext_H) = hartSupports(Ext_H) & misa[H] == 0b1
 
+
+function clause currentlyEnabled(Ext_Svbare) = currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Sv32) = hartSupports(Ext_Sv32) &  currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Sv39) = hartSupports(Ext_Sv39) &  currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Sv48) = hartSupports(Ext_Sv48) &  currentlyEnabled(Ext_S)
+function clause currentlyEnabled(Ext_Sv57) = hartSupports(Ext_Sv57) &  currentlyEnabled(Ext_S)
 // Svnapot depends on Sv39.
-function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & sys_enable_sv39()
+function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & currentlyEnabled(Ext_Sv39)
+
+function virtual_memory_supported() -> bool = {
+  currentlyEnabled(Ext_Sv32) | currentlyEnabled(Ext_Sv39) | currentlyEnabled(Ext_Sv48) | currentlyEnabled(Ext_Sv57)
+}
 
 /*
  * Illegal values legalized to least privileged mode supported.
@@ -260,7 +264,7 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
     TW = if currentlyEnabled(Ext_U) then v[TW] else 0b0,
     TVM = if currentlyEnabled(Ext_S) then v[TVM] else 0b0,
     MXR = if currentlyEnabled(Ext_S) then v[MXR] else 0b0,
-    SUM = if currentlyEnabled(Ext_S) then v[SUM] else 0b0, // TODO: Should also be disabled if satp.MODE is read-only 0
+    SUM = if virtual_memory_supported() then v[SUM] else 0b0,
     MPRV = if currentlyEnabled(Ext_U) then v[MPRV] else 0b0,
     /* We don't have any extension context yet. */
     XS = extStatus_to_bits(Off),
@@ -893,11 +897,11 @@ function legalize_satp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(6
   let s = Mk_Satp64(v);
   let supported : bool = match satpMode_of_bits(a, s[Mode]) {
     None()      => false,
-    Some(Bare)  => true,
+    Some(Bare)  => currentlyEnabled(Ext_Svbare),
     Some(Sv32)  => false, // Sv32 is not legal on RV64.
-    Some(Sv39)  => sys_enable_sv39(),
-    Some(Sv48)  => sys_enable_sv48(),
-    Some(Sv57)  => sys_enable_sv57(),
+    Some(Sv39)  => currentlyEnabled(Ext_Sv39),
+    Some(Sv48)  => currentlyEnabled(Ext_Sv48),
+    Some(Sv57)  => currentlyEnabled(Ext_Sv57),
   };
 
   let s = [
@@ -910,7 +914,7 @@ function legalize_satp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(6
 
   // Read-only zero if virtual addressing is not supported, even for Bare writes.
   // (This is not required but is likely.)
-  let supported = supported & (sys_enable_sv39() | sys_enable_sv48() | sys_enable_sv57());
+  let supported = supported & virtual_memory_supported();
   if supported then s.bits else o
 }
 
@@ -924,8 +928,8 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
   let s = Mk_Satp32(v);
   let supported : bool = match satpMode_of_bits(a, 0b000 @ s[Mode]) {
     None()      => false,
-    Some(Bare)  => true,
-    Some(Sv32)  => sys_enable_sv32(),
+    Some(Bare)  => currentlyEnabled(Ext_Svbare),
+    Some(Sv32)  => currentlyEnabled(Ext_Sv32),
     _           => internal_error(__FILE__, __LINE__, "Unreachable satp32 mode"),
   };
 
@@ -944,7 +948,7 @@ function legalize_satp32(a : Architecture, o : bits(32), v : bits(32)) -> bits(3
 
   // Read-only zero if virtual addressing is not supported, even for Bare writes.
   // (This is not required but is likely.)
-  let supported = supported & sys_enable_sv32();
+  let supported = supported & virtual_memory_supported();
   if supported then s.bits else o
 }
 
