@@ -209,9 +209,9 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_regs_srcs}
                 ${sail_sys_srcs}
                 "riscv_platform.sail"
-                "riscv_sstc.sail"
                 ${sail_check_srcs}
                 "riscv_inst_retire.sail"
+                "riscv_sstc.sail"
                 "riscv_mem.sail"
                 "cheri/cheri_mem.sail"
                 ${sail_vm_srcs}
