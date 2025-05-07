@@ -217,7 +217,7 @@ function vmem_read_meta forall 'n, 0 < 'n < max_mem_access . (
   vmem_read_priv_meta(typ, effectivePrivilege(typ, mstatus, cur_privilege()), vaddr, width, aq, rel, res, meta)
 
 // Don't read or return meta and use default privilege.
-function vmem_read forall 'n, 0 < 'n < max_mem_access . (
+function vmem_read_vaddr forall 'n, 0 < 'n < max_mem_access . (
   typ : AccessType(ext_access_type),
   vaddr : virtaddr,
   width : int('n),
