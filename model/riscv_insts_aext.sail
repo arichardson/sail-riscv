@@ -70,26 +70,12 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  /* Get the address, X(rs1) (no offset).
-    * Extensions might perform additional checks on address validity.
-    */
-  match ext_data_get_addr(rs1, zeros(), Read(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      /* "LR faults like a normal load, even though it's in the AMO major opcode space."
-        * - Andrew Waterman, isa-dev, 10 Jul 2018.
-        */
-      if not(is_aligned(bits_of(vaddr), width))
-      then Memory_Exception(vaddr, E_Load_Addr_Align())
-      else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, ext_ptw)     => Translate_Exception(vaddr, e, ext_ptw),
-        TR_Address(paddr, pbmt, _) =>
-          match mem_read(Read(Data), pbmt, paddr, width_bytes, aq, aq & rl, true) {
-            Ok(result) => { load_reservation(bits_of(paddr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
-            Err(e)     => Memory_Exception(vaddr, e)
-          },
-      }
-    }
+  match vmem_read(rs1, zeros(), width_bytes, Read(Data), aq, aq & rl, true) {
+    Ok(data) => {
+      X(rd) = sign_extend(data);
+      RETIRE_SUCCESS
+    },
+    Err(e) => e,
   }
 }
 
@@ -110,59 +96,26 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
   // This is checked during decoding.
   assert(width_bytes <= xlen_bytes);
 
-  /* Get the address, X(rs1) (no offset).
-    * Extensions might perform additional checks on address validity.
-    */
-  let res : ExecutionResult = match ext_data_get_addr(rs1, zeros(), Write(Data), width_bytes) {
-    Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
-    Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned(bits_of(vaddr), width))
-      then { Memory_Exception(vaddr, E_SAMO_Addr_Align()) }
-      else {
-        // SC must always be aligned so it can never span a page, which means
-        // we can use translateAddr() directly. We have to do address translation
-        // first because it may fail due to access conditions (PMPs/PMAs).
-        match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
-                                                    * both result in a SAMO exception */
-          TR_Failure(e, ext_ptw)    => { Translate_Exception(vaddr, e, ext_ptw) },
-          TR_Address(addr, pbmt, _) => {
-            // Explicitly do access checks first in case the memory does
-            // not exist or doesn't support LR/SC.
-            let typ = Write(default_write_acc);
-            let priv = effectivePrivilege(typ, mstatus, cur_privilege());
-            match phys_access_check(typ, priv, pbmt, addr, width_bytes, true) {
-              Some(e) => { Memory_Exception(vaddr, e) },
-              None() => {
-                if not(speculate_conditional()) | not(match_reservation(bits_of(addr))) then {
-                  // Spurious failure (this is allowed), or the reservation
-                  // address does not match.
-                  X(rd) = zero_extend(0b1); RETIRE_SUCCESS
-                } else {
-                  match mem_write_ea(addr, width_bytes, aq & rl, rl, true) {
-                    Err(e) => Memory_Exception(vaddr, e),
-                    Ok(_)  => {
-                      let rs2_val = X(rs2);
-                      match mem_write_value(pbmt, addr, width_bytes, rs2_val[width_bytes * 8 - 1 .. 0], aq & rl, rl, true) {
-                        Ok(true)  => { X(rd) = zero_extend(0b0); RETIRE_SUCCESS },
-                        Ok(false) => { X(rd) = zero_extend(0b1); RETIRE_SUCCESS },
-                        Err(e)    => Memory_Exception(vaddr, e),
-                      }
-                    }
-                  }
-                }
-              },
-            }
-          }
-        }
-      }
-    }
+  if speculate_conditional() == false then {
+    /* should only happen in RMEM
+     * RMEM: allow SC to fail very early
+     */
+    X(rd) = zero_extend(0b1);
+    return RETIRE_SUCCESS
   };
-  // The spec says "Regardless of success or failure, executing an SC
-  // instruction invalidates any reservation held by this hart", however it
-  // seems like "failure" here does not include failure due to exceptions.
-  // See https://github.com/riscv/riscv-isa-manual/issues/1010
-  if res == RETIRE_SUCCESS then cancel_reservation();
-  res
+
+  /* normal non-rmem case
+   * RMEM: SC is allowed to succeed (but might fail later)
+   */
+  let data = X(rs2)[width_bytes * 8 - 1 .. 0];
+  match vmem_write(rs1, zeros(), width_bytes, data, Write(Data), aq & rl, rl, true) {
+    Ok(b) => {
+      X(rd) = zero_extend(bool_bits(~(b)));
+      cancel_reservation();
+      RETIRE_SUCCESS
+    },
+    Err(e) => e,
+  }
 }
 
 mapping clause assembly = STORECON(aq, rl, rs2, rs1, size, rd)
@@ -203,7 +156,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
   match ext_data_get_addr(rs1, zeros(), ReadWrite(Data, Data), width_bytes) {
     Ext_DataAddr_Error(e)  => Ext_DataAddr_Check_Failure(e),
     Ext_DataAddr_OK(vaddr) => {
-      if not(is_aligned(bits_of(vaddr), width))
+      if not(is_aligned_addr(bits_of(vaddr), width))
       then Memory_Exception(vaddr, E_SAMO_Addr_Align())
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
         TR_Failure(e, ext_ptw)    => Translate_Exception(vaddr, e, ext_ptw),
