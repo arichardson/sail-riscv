@@ -215,8 +215,6 @@ function loop () : unit -> unit = {
       i = i + 1;
       if i == insns_per_tick then {
         tick_clock(to_bits(64, 1));
-        /* for now, we drive the platform i/o at every clock tick. */
-        tick_platform();
         i = 0;
       }
     }
