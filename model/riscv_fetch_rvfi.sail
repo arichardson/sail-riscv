@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function fetch() -> FetchResult = {
+function rvfi_fetch() -> FetchResult = {
   rvfi_inst_data[rvfi_order] = minstret;
   rvfi_pc_data[rvfi_pc_rdata] = zero_extend(get_arch_pc());
   rvfi_inst_data[rvfi_mode] = zero_extend(privLevel_to_bits(cur_privilege()));
@@ -14,8 +14,9 @@ function fetch() -> FetchResult = {
 
   /* First allow extensions to check pc */
   match ext_fetch_check_pc(PC, PC) {
-    Ext_FetchAddr_Error(e)   => F_Ext_Error(e),
-    Ext_FetchAddr_OK(use_pc) => {
+    Ext_FetchAddr_Error(e)     => F_Error(e, PC),
+    Ext_FetchAddr_Ext_Error(e) => F_Ext_Error(e),
+    Ext_FetchAddr_OK(use_pc)   => {
       /* then check PC alignment */
       let use_pc_bits = bits_of(use_pc);
       if   (use_pc_bits[0] != bitzero | (use_pc_bits[1] != bitzero & not(currentlyEnabled(Ext_Zca))))
@@ -31,10 +32,11 @@ function fetch() -> FetchResult = {
             /* fetch PC check for the next instruction granule */
             let PC_hi = PC + 2;
             match ext_fetch_check_pc(PC, PC_hi) {
-              Ext_FetchAddr_Error(e)      => F_Ext_Error(e),
+              Ext_FetchAddr_Error(e)      => F_Error(e, PC_hi),
+              Ext_FetchAddr_Ext_Error(e)  => F_Ext_Error(e),
               Ext_FetchAddr_OK(use_pc_hi) =>
                 match translateAddr(use_pc_hi, InstructionFetch()) {
-                  TR_Failure(e, _) => F_Error(e, PC),
+                  TR_Failure(e, _) => F_Error(e, PC_hi),
                   TR_Address(_, _, _) => F_Base(i)
               }
             }
