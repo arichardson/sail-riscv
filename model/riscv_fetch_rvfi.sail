@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function fetch() -> FetchResult = {
+function rvfi_fetch() -> FetchResult = {
   rvfi_inst_data[rvfi_order] = minstret;
   rvfi_pc_data[rvfi_pc_rdata] = zero_extend(get_arch_pc());
   rvfi_inst_data[rvfi_mode] = zero_extend(privLevel_to_bits(cur_privilege()));
@@ -36,7 +36,7 @@ function fetch() -> FetchResult = {
               Ext_FetchAddr_Ext_Error(e)  => F_Ext_Error(e),
               Ext_FetchAddr_OK(use_pc_hi) =>
                 match translateAddr(use_pc_hi, InstructionFetch()) {
-                  TR_Failure(e, _) => F_Error(e, PC),
+                  TR_Failure(e, _) => F_Error(e, PC_hi),
                   TR_Address(_, _, _) => F_Base(i)
               }
             }

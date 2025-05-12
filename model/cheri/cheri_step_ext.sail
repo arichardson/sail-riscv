@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function ext_reset() -> unit = {
+function ext_reset_cheri() -> unit = {
   PCC = infinite_cap;
   nextPCC = infinite_cap;
   ddc = infinite_cap;
@@ -63,6 +63,8 @@ function ext_reset() -> unit = {
   x30 = {x30 with tag = false};
   x31 = {x31 with tag = false};
 }
+
+function ext_reset() -> unit = if get_config_rvfi() then ext_rvfi_reset() else ext_reset_cheri()
 
 function ext_reset_misa() -> unit = ()
 

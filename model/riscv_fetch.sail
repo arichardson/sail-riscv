@@ -11,10 +11,13 @@
  */
 
 
-function fetch() -> FetchResult =
+function fetch() -> FetchResult = {
   /* fetch PC check for extensions: extensions return a transformed PC to fetch,
    * but any exceptions use the untransformed PC.
    */
+  // TODO: Add a parameter to try_step() to allow forcing the fetch result and use that instead.
+  if get_config_rvfi()
+  then return rvfi_fetch();
   match ext_fetch_check_pc(PC, PC) {
     Ext_FetchAddr_Error(e)     => F_Error(e, PC),
     Ext_FetchAddr_Ext_Error(e) => F_Ext_Error(e),
@@ -59,3 +62,4 @@ function fetch() -> FetchResult =
       }
     }
   }
+}
