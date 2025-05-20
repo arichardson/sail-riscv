@@ -80,7 +80,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
     }
     else VLMAX;
 
-  to_bits(xlen, new_vl)
+  to_bits_unsafe(xlen, new_vl)
 }
 
 function writeback_vill() -> unit = writeback_vset(0b1 @ zeros(xlen - 1), zeros())
@@ -148,7 +148,40 @@ mapping clause encdec = VSETVL_TYPE(rs2, rs1, rd)
   <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-function clause execute VSETVL_TYPE(rs2, rs1, rd) = process_vset(X(rs2), get_avl(rd, rs1), rd)
+function clause execute VSETVL(rs2, rs1, rd) = {
+  let LMUL_pow_ori  = get_lmul_pow();
+  let SEW_pow_ori   = get_sew_pow();
+  let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
+
+  /* set vtype */
+  vtype.bits = X(rs2);
+
+  /* check new SEW and LMUL are legal and calculate VLMAX */
+  let VLEN_pow     = get_vlen_pow();
+  let ELEN_pow     = get_elen_pow();
+  let LMUL_pow_new = get_lmul_pow();
+  let SEW_pow_new  = get_sew_pow();
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
+
+  /* set vl according to VLMAX and AVL */
+  if (rs1 != zreg) then { /* normal stripmining */
+    let rs1_val = X(rs1);
+    let AVL = unsigned(rs1_val);
+    vl = calculate_new_vl(AVL, VLMAX);
+    X(rd) = vl;
+  } else if (rd != zreg) then { /* set vl to VLMAX */
+    let AVL = unsigned(ones(xlen));
+    vl = to_bits_unsafe(xlen, VLMAX);
+    X(rd) = vl;
+  } else { /* keep existing vl */
+    let AVL = unsigned(vl);
+    let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
+    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+  };
+
+  /* reset vstart to 0 */
+  set_vstart(zeros());
 
 mapping clause assembly = VSETVL_TYPE(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
