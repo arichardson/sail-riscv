@@ -10,7 +10,7 @@
 val sys_hpmevent_writable_bits = pure "sys_hpmevent_writable_bits" : unit -> bits(64)
 
 /* Hardware Performance Monitoring counters */
-function clause currentlyEnabled(Ext_Zihpm) = hartSupports(Ext_Zihpm) & currentlyEnabled(Ext_Zicntr)
+function clause currentlyEnabled(Ext_Zihpm) = hartSupports(Ext_Zihpm) & currentlyEnabled(Ext_Zicsr)
 
 /* Hardware performance monitoring counters */
 mapping clause csr_name_map = 0xC03  <-> "hpmcounter3"
