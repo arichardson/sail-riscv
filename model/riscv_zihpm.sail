@@ -13,7 +13,7 @@ val sys_enable_zihpm = pure "sys_enable_zihpm" : unit -> bool
 val sys_enable_sscofpmf = pure "sys_enable_sscofpmf" : unit -> bool
 
 /* Hardware Performance Monitoring counters */
-function clause currentlyEnabled(Ext_Zihpm) = hartSupports(Ext_Zihpm) & currentlyEnabled(Ext_Zicntr)
+function clause currentlyEnabled(Ext_Zihpm) = hartSupports(Ext_Zihpm) & currentlyEnabled(Ext_Zicsr)
 
 /* Hardware performance monitoring counters */
 mapping clause csr_name_map = 0xC03  <-> "hpmcounter3"
