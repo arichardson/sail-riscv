@@ -42,8 +42,8 @@ function translateRange(
 
   // Translate the first address, return failure if it fails.
   let tr0 : translation = match translateAddr(vaddr, typ) {
-    TR_Address(paddr, pbmt, ext_ptw) => (paddr, pbmt, ext_ptw),
-    TR_Failure(exc, ext_ptw) => return Err(vaddr, exc, ext_ptw),
+    Ok(paddr, pbmt, ext_ptw) => (paddr, pbmt, ext_ptw),
+    Err(exc, ext_ptw) => return Err(vaddr, exc, ext_ptw),
   };
 
   // If the second access exists then we need to translate its address.
@@ -51,8 +51,8 @@ function translateRange(
     // Second address to translate is at the start of the next page (wrapped).
     let vaddr1 = Virtaddr(bits_of_virtaddr(vaddr) + width0);
     let tr1 : translation = match translateAddr(vaddr1, typ) {
-      TR_Address(paddr, pbmt, ext_ptw) => (paddr, pbmt, ext_ptw),
-      TR_Failure(exc, ext_ptw) => return Err(vaddr1, exc, ext_ptw),
+      Ok(paddr, pbmt, ext_ptw) => (paddr, pbmt, ext_ptw),
+      Err(exc, ext_ptw) => return Err(vaddr1, exc, ext_ptw),
     };
     Some(tr1)
   } else {

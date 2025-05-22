@@ -699,8 +699,8 @@ function clause execute (LoadResCap(cd, rs1_cs1, aq, rl)) = {
       // If we don't have C capability then the tag will always be cleared and
       // it is treated as an untagged load.
       match translateAddr(vaddr, Read(if canC(auth_val) then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
-        TR_Address(addr, pbmt, ext_ptw) => {
+        Err(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
+        Ok(addr, pbmt, ext_ptw) => {
           let c = mem_read_cap(Read(Data), addr, pbmt, aq, aq & rl, true);
           match c {
             Ok(v) => {
@@ -757,8 +757,8 @@ function clause execute LoadCapImm(cd, rs1_cs1, imm) = {
       // If we don't have C capability then the tag will always be cleared and
       // it is treated as an untagged load.
       match translateAddr(vaddr, Read(if canC(auth_val) then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
-        TR_Address(addr, pbmt, ext_ptw) => {
+        Err(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
+        Ok(addr, pbmt, ext_ptw) => {
           let aq = false;
           let rl = false;
           match mem_read_cap(Read(Data), addr, pbmt, aq, aq & rl, false) {
@@ -816,8 +816,8 @@ function clause execute StoreCapImm(cs2, rs1_cs1, imm) = {
       let cs2_val = legalizeStoredPermissions(cs2_val, auth_val);
 
       match translateAddr(vaddr, Write(if cs2_val.tag then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
-        TR_Address(addr, pbmt, _) => {
+        Err(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
+        Ok(addr, pbmt, _) => {
           let aq = false;
           let rl = false;
           match mem_write_ea_cap(addr, aq & rl, rl, false) {
@@ -868,8 +868,8 @@ function clause execute StoreCondCap(rd, cs2, rs1_cs1, aq, rl) = {
       let cs2_val = legalizeStoredPermissions(cs2_val, auth_val);
 
       match translateAddr(vaddr, Write(if cs2_val.tag then Tagged else Data)) {
-        TR_Failure(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
-        TR_Address(addr, pbmt, _) => {
+        Err(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
+        Ok(addr, pbmt, _) => {
           if not(match_reservation(bits_of_physaddr(addr))) then {
             /* cannot happen in rmem */
             X(rd) = zero_extend(0b1);
@@ -933,8 +933,8 @@ function clause execute AMOSwapCap(cd, cs2, rs1_cs1, aq, rl) = {
       let typ = ReadWrite(if canC(auth_val) then Tagged else Data, if cs2_val.tag then Tagged else Data);
 
       match translateAddr(vaddr, typ) {
-        TR_Failure(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
-        TR_Address(addr, pbmt, ext_ptw) => {
+        Err(e, ext_ptw) => Translate_Exception(vaddr, e, ext_ptw),
+        Ok(addr, pbmt, ext_ptw) => {
           match mem_write_ea_cap(addr, aq & rl, rl, false) {
             Err(e) => Memory_Exception(vaddr, e),
             Ok(_)  => {
