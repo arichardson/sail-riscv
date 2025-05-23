@@ -18,8 +18,7 @@ function clause currentlyEnabled(Ext_Zvfh) = sys_enable_zvfh() & currentlyEnable
 
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
-  let vstart_length = get_vlen_pow();
-  vstart = zero_extend(value[(vstart_length - 1) .. 0]);
+  vstart = zero_extend(value[(VLEN_pow - 1) .. 0]);
   csr_write_callback("vstart", zero_extend(vstart));
 }
 
@@ -45,7 +44,7 @@ function clause read_CSR(0x00A, _) = zero_extend(vcsr[vxrm])
 function clause read_CSR(0x00F, _) = zero_extend(vcsr.bits)
 function clause read_CSR(0xC20, _) = vl
 function clause read_CSR(0xC21, _) = vtype.bits
-function clause read_CSR(0xC22, _) = get_vlenb()
+function clause read_CSR(0xC22, _) = VLENB
 
 function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); zero_extend(vstart) }
 function clause write_CSR(0x009, value) = { ext_write_vcsr (vcsr[vxrm], value[0 .. 0]); zero_extend(vcsr[vxsat]) }

@@ -48,7 +48,6 @@ function process_vrgatherei16(vm : bits(1), vs2 : vregidx, vs1 : vregidx, vd : v
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   let vs1_EMUL_pow = LMUL_pow + 4 - SEW_pow;
@@ -767,7 +766,6 @@ function clause execute(VXSG(funct6, vm, vs2, rs1, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if  illegal_normal(vd, vm) |
@@ -1192,7 +1190,6 @@ function clause execute(VISG(funct6, vm, vs2, simm, vd)) = {
   let SEW_pow  = get_sew_pow();
   let SEW      = get_sew();
   let LMUL_pow = get_lmul_pow();
-  let VLEN_pow = get_vlen_pow();
   let num_elem = get_num_elem(LMUL_pow, SEW);
 
   if  illegal_normal(vd, vm) |
