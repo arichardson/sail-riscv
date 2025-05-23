@@ -25,7 +25,7 @@ function pte_permission_ok(
     Some(ext) => {
       if isTaggedWrite(ac) &
         ext[CW] == 0b0 &
-        (ext[CRG] == 0b0 | not(plat_enable_dirty_update())) then {
+        (ext[CRG] == 0b0 | not(plat_enable_dirty_update)) then {
         cheri_page_fault = true;
       } else if isTaggedRead(ac) then {
         match (ext[CW], ext[CRG]) {
@@ -96,7 +96,7 @@ function update_pte forall 'pte_width, 'pte_width in {4, 8} . (
     },
   };
 
-  if not(plat_enable_dirty_update()) then {
+  if not(plat_enable_dirty_update) then {
     (Err(PTW_PTE_Update()), {ext_ptw with cheri_page_fault = fault_cause})
   } else {
     match write_pte(pteAddr, 'pte_width, pte) {
