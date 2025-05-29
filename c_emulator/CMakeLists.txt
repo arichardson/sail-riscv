@@ -14,6 +14,8 @@ set(EMULATOR_COMMON_SRCS
     riscv_sim.cpp
     riscv_softfloat.c
     riscv_softfloat.h
+    config_utils.h
+    config_utils.cpp
     "../handwritten_support/c_emulator_fix.c"
 )
 
