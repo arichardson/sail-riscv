@@ -1087,9 +1087,9 @@ mapping clause encdec = StoreCondCap(rd, cs2, rs1, aq, rl)                      
 mapping clause encdec = AMOSwapCap(cd, cs2, rs1, aq, rl)                                                               if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo)
   <-> 0b00001 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0101111 if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo) /* amoswap.c */
 
-mapping clause assembly = LoadResCap(cd, rs1, aq, rl)        <-> "lr.c"      ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1)
-mapping clause assembly = StoreCondCap(rd, cs2, rs1, aq, rl) <-> "sc.c"      ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd)     ^ sep() ^ cap_reg_name(cs2) ^ sep() ^ reg_name(rs1)
-mapping clause assembly = AMOSwapCap(cd, cs2, rs1, aq, rl)   <-> "amoswap.c" ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ cap_reg_name(cs2) ^ sep() ^ reg_name(rs1)
+mapping clause assembly = LoadResCap(cd, rs1, aq, rl)        <-> "lr.c"      ^ maybe_aqrl(aq, rl) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1)
+mapping clause assembly = StoreCondCap(rd, cs2, rs1, aq, rl) <-> "sc.c"      ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd)     ^ sep() ^ cap_reg_name(cs2) ^ sep() ^ reg_name(rs1)
+mapping clause assembly = AMOSwapCap(cd, cs2, rs1, aq, rl)   <-> "amoswap.c" ^ maybe_aqrl(aq, rl) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ cap_reg_name(cs2) ^ sep() ^ reg_name(rs1)
 
 /*
   CHERI really needs sub word atomic operations because bounds checks mean you
