@@ -23,7 +23,19 @@ function get_entry_point() = zero_extend(0x1000)
 
 $endif
 
-function main() : unit -> unit = ()
+function main() : unit -> unit = {
+  PC = get_entry_point();
+  print_bits("PC = ", PC);
+
+  try {
+    init_model("");
+    sail_end_cycle();
+    loop()
+  } catch {
+    Error_not_implemented(s) => print_string("Error: Not implemented: ", s),
+    Error_internal_error() => print("Error: internal error")
+  }
+}
 
 // For symbolic execution using Isla, we need an entry point that
 // allows us to execute a single instruction.
