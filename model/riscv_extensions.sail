@@ -57,9 +57,6 @@ function clause hartSupports(Ext_B) = config extensions.B.supported
 enum clause extension = Ext_V
 mapping clause extensionName = Ext_V <-> "v"
 function clause hartSupports(Ext_V) = config extensions.V.supported
-// Hypervisor
-enum clause extension = Ext_H
-function clause hartSupports(Ext_H) = config extensions.H.supported
 // Supervisor
 enum clause extension = Ext_S
 mapping clause extensionName = Ext_S <-> "s"
@@ -68,6 +65,10 @@ function clause hartSupports(Ext_S) = config extensions.S.supported
 enum clause extension = Ext_U
 mapping clause extensionName = Ext_U <-> "u"
 function clause hartSupports(Ext_U) = config extensions.U.supported
+// Hypervisor
+enum clause extension = Ext_H
+mapping clause extensionName = Ext_H <-> "h"
+function clause hartSupports(Ext_H) = false
 
 // Cache-Block Management Instructions
 enum clause extension = Ext_Zicbom
@@ -270,7 +271,6 @@ function clause hartSupports(Ext_Zvknhb) = config extensions.Zvknhb.supported
 enum clause extension = Ext_Zvksh
 mapping clause extensionName = Ext_Zvksh <-> "zvksh"
 function clause hartSupports(Ext_Zvksh) = config extensions.Zvksh.supported
-
 
 // Count Overflow and Mode-Based Filtering
 enum clause extension = Ext_Sscofpmf

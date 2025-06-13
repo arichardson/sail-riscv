@@ -66,6 +66,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zca.sail"
                 "riscv_insts_mext.sail"
                 "riscv_insts_zicsr.sail"
+                "riscv_insts_hext.sail"
                 "riscv_insts_hints.sail"
                 "cheri/cheri_csr_op.sail"
                 "riscv_insts_fext.sail"
