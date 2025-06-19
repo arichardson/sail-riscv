@@ -246,6 +246,8 @@ function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -261,7 +263,6 @@ function clause execute(NVSTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
   var result = initial_result;
 
-  assert(SEW_widen <= 64);
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
@@ -319,6 +320,8 @@ function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -334,7 +337,6 @@ function clause execute(NVTYPE(funct6, vm, vs2, vs1, vd)) = {
   };
   var result = initial_result;
 
-  assert(SEW_widen <= 64);
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let shift_amount = get_shift_amount(vs1_val[i], SEW_widen);
@@ -629,6 +631,8 @@ function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -644,7 +648,6 @@ function clause execute(NXSTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
   var result = initial_result;
 
-  assert(SEW_widen <= 64);
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
@@ -701,6 +704,8 @@ function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -716,7 +721,6 @@ function clause execute(NXTYPE(funct6, vm, vs2, rs1, vd)) = {
   };
   var result = initial_result;
 
-  assert(SEW_widen <= 64);
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let shift_amount = get_shift_amount(rs1_val, SEW_widen);
@@ -1052,6 +1056,8 @@ function clause execute(NISTYPE(funct6, vm, vs2, uimm, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1067,7 +1073,6 @@ function clause execute(NISTYPE(funct6, vm, vs2, uimm, vd)) = {
   };
   var result = initial_result;
 
-  assert(SEW_widen <= 64);
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       result[i] = match funct6 {
@@ -1124,6 +1129,8 @@ function clause execute(NITYPE(funct6, vm, vs2, uimm, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_widen, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1139,7 +1146,6 @@ function clause execute(NITYPE(funct6, vm, vs2, uimm, vd)) = {
   };
   var result = initial_result;
 
-  assert(SEW_widen <= 64);
   foreach (i from 0 to (num_elem - 1)) {
     if mask[i] == bitone then {
       let shift_amount = get_shift_amount(imm_val, SEW_widen);
@@ -1636,6 +1642,8 @@ function clause execute(WVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1711,6 +1719,8 @@ function clause execute(WVTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs1, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1781,6 +1791,8 @@ function clause execute(WMVVTYPE(funct6, vm, vs2, vs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -1846,6 +1858,8 @@ function clause execute(VEXT2TYPE(funct6, vm, vs2, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_half, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_half >= 8);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_half;
@@ -1908,6 +1922,8 @@ function clause execute(VEXT4TYPE(funct6, vm, vs2, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow_quart, LMUL_pow))
   then return Illegal_Instruction();
 
+  assert(SEW_quart >= 8);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_quart;
@@ -1969,6 +1985,8 @@ function clause execute(VEXT8TYPE(funct6, vm, vs2, vd)) = {
       misaligned_vreg(vs2, LMUL_pow_eighth) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow_eighth, LMUL_pow))
   then return Illegal_Instruction();
+
+  assert(SEW_eighth >= 8);
 
   let 'n = num_elem;
   let 'm = SEW;
@@ -2337,6 +2355,8 @@ function clause execute(WVXTYPE(funct6, vm, vs2, rs1, vd)) = {
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -2410,6 +2430,8 @@ function clause execute(WXTYPE(funct6, vm, vs2, rs1, vd)) = {
       misaligned_vreg(vs2, LMUL_pow_widen)
   then return Illegal_Instruction();
 
+  assert(SEW_widen <= 64);
+
   let 'n = num_elem;
   let 'm = SEW;
   let 'o = SEW_widen;
@@ -2478,6 +2500,8 @@ function clause execute(WMVXTYPE(funct6, vm, vs2, rs1, vd)) = {
       misaligned_vreg(vs2, LMUL_pow) |
       not(valid_reg_overlap(vs2, vd, LMUL_pow, LMUL_pow_widen))
   then return Illegal_Instruction();
+
+  assert(SEW_widen <= 64);
 
   let 'n = num_elem;
   let 'm = SEW;

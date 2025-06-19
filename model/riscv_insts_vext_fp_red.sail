@@ -77,12 +77,14 @@ val process_rfvv_widen: forall 'n 'm 'p, 'n > 0 & 'm in {8, 16, 32, 64}. (rfvvfu
 function process_rfvv_widen(funct6, vm, vs2, vs1, vd, num_elem_vs, SEW, LMUL_pow) = {
   let rm_3b          = fcsr[FRM];
   let SEW_widen      = SEW * 2;
-  let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
+  let LMUL_pow_widen = LMUL_pow + 1;
 
   if  illegal_fp_reduction_widen(SEW, rm_3b, SEW_widen) |
       misaligned_vreg(vs2, LMUL_pow)
   then return Illegal_Instruction();
   assert(SEW >= 16 & SEW_widen <= 64);
+
+  let num_elem_vd = get_num_elem(0, SEW_widen); /* vd regardless of LMUL setting */
 
   if unsigned(vl) == 0 then { set_vstart(zeros()); return RETIRE_SUCCESS }; /* if vl=0, no operation is performed */
 
