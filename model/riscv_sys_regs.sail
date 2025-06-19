@@ -780,7 +780,7 @@ function set_xstatus(priv : Privilege, xstatus : bits(64)) -> unit = {
 mapping clause csr_name_map = 0x100  <-> "sstatus"
 function clause is_CSR_defined(0x100) = currentlyEnabled(Ext_S) // sstatus
 function clause read_CSR(0x100) = lower_mstatus(mstatus).bits[xlen - 1 .. 0]
-function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, zero_extend(value)); mstatus.bits[xlen - 1 .. 0] }
+function clause write_CSR(0x100, value) = { mstatus = legalize_sstatus(mstatus, zero_extend(value)); lower_mstatus(mstatus).bits[xlen - 1 .. 0] }
 
 
 bitfield Sinterrupts : xlenbits = {
@@ -829,7 +829,7 @@ function lift_sip(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
 mapping clause csr_name_map = 0x144  <-> "sip"
 function clause is_CSR_defined(0x144) = currentlyEnabled(Ext_S) // sip
 function clause read_CSR(0x144) = lower_mip(mip, mideleg).bits
-function clause write_CSR(0x144, value) = { mip = lift_sip(mip, mideleg, Mk_Sinterrupts(value)); mip.bits }
+function clause write_CSR(0x144, value) = { mip = lift_sip(mip, mideleg, Mk_Sinterrupts(value)); lower_mip(mip, mideleg).bits }
 
 
 // sie
@@ -846,7 +846,7 @@ function lift_sie(o : Minterrupts, d : Minterrupts, s : Sinterrupts) -> Minterru
 mapping clause csr_name_map = 0x104  <-> "sie"
 function clause is_CSR_defined(0x104) = currentlyEnabled(Ext_S) // sie
 function clause read_CSR(0x104) = lower_mie(mie, mideleg).bits
-function clause write_CSR(0x104, value) = { mie = lift_sie(mie, mideleg, Mk_Sinterrupts(value)); mie.bits }
+function clause write_CSR(0x104, value) = { mie = lift_sie(mie, mideleg, Mk_Sinterrupts(value)); lower_mie(mie, mideleg).bits }
 
 
 /* other non-VM related supervisor state */
