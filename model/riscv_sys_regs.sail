@@ -532,7 +532,7 @@ function legalize_cause(v : xlenbits) -> Mcause = {
 
   let m = Mk_Mcause(v);
   [m with Cause = if cause_bits == 0 then zeros()
-                  else zero_extend(m[Cause][5 - 1 .. 0])]
+                  else m[Cause]] // Fix for CVA6: just preserve all cause bits
 }
 
 function get_xcause(priv : Privilege) -> Mcause =
