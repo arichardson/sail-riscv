@@ -97,6 +97,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zvkg.sail"
                 "riscv_insts_zvkned.sail"
                 "riscv_insts_zvknhab.sail"
+                "riscv_insts_zvksed.sail"
                 "riscv_insts_zvksh.sail"
                 "cheri/cheri_insts_begin.sail"
                 "cheri/cheri_insts.sail"
