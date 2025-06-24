@@ -146,6 +146,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_smcntrpmf.sail"
                 "riscv_pma.sail"
                 "riscv_svpbmt.sail"
+                "riscv_sys_reservation.sail"
                 "riscv_sys_control.sail"
             )
 
