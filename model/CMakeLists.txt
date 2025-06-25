@@ -6,6 +6,17 @@ function(string_upper_initial s result)
     set("${result}" "${new}" PARENT_SCOPE)
 endfunction()
 
+# Common Sail flags for all commands.
+set(sail_common
+    # Don't allow implicit var declaration (like Python). This is
+    # deprecated because it is error-prone.
+    --strict-var
+    # bits('n) is only well-formed if 'n >= 0.
+    --strict-bitvector
+    # Minimum required Sail compiler version.
+    --require-version ${SAIL_REQUIRED_VER}
+)
+
 foreach (xlen IN ITEMS 32 64)
     foreach (flen IN ITEMS 32 64)
         foreach (variant IN ITEMS "" "rocq" "rmem" "lean" "lem" "isabelle")
@@ -282,18 +293,12 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         # Output file (without extension).
                         -o ${c_model_no_ext}
                         # Generate a file containing information about all possible branches.
                         # See https://github.com/rems-project/sail/blob/sail2/sailcov/README.md
                         ${coverage_args}
-                        # Don't allow implicit var declaration (like Python). This is
-                        # deprecated because it is error-prone.
-                        --strict-var
-                        # bits('n) is only well-formed if 'n >= 0.
-                        --strict-bitvector
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         # Optimisations.
                         -O --Oconstant-fold
                         # Cache Z3 results in z3_problems file to speed up incremental compilation.
@@ -353,6 +358,7 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         # Generate JSON documentation file.
                         --doc
                         # Format to interpret comments as. You can also use 'asciidoc'
@@ -370,8 +376,6 @@ foreach (xlen IN ITEMS 32 64)
                         -o ${CMAKE_CURRENT_BINARY_DIR}
                         # The name of the JSON file.
                         --doc-bundle ${model_doc}
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -391,12 +395,11 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         # Generate SMT files.
                         --smt
                         # The prefix of the output files.
                         -o "${CMAKE_CURRENT_BINARY_DIR}/model"
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         --config ${CMAKE_SOURCE_DIR}/config/default.json
                         # Input files.
                         ${sail_srcs}
@@ -417,6 +420,7 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         # Generate lem files.
                         --lem
                         --lem-mwords
@@ -430,8 +434,6 @@ foreach (xlen IN ITEMS 32 64)
                         --isa-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         # The prefix of the output files.
                         -o "lem_${arch}"
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -443,14 +445,13 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         --tofrominterp
                         --tofrominterp-lem
                         --tofrominterp-mwords
                         --tofrominterp-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         # The prefix of the output files.
                         -o "rmem_${arch}"
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -462,11 +463,10 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         --marshal
                         # The prefix of the output files.
                         -o "rmem_${arch}"
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -488,6 +488,7 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         --dcoq-undef-axioms
                         --coq
                         --coq-lib riscv_extras
@@ -496,8 +497,6 @@ foreach (xlen IN ITEMS 32 64)
                         # The prefix of the output files.
                         -o "${arch}"
                         --config ${CMAKE_SOURCE_DIR}/config/default.json
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         # Input files.
                         ${sail_srcs}
                 )
@@ -527,7 +526,6 @@ foreach (xlen IN ITEMS 32 64)
                         --config ${CMAKE_SOURCE_DIR}/config/default.json
                         --lean
                         --memo-z3
-                        --require-version ${SAIL_REQUIRED_VER}
                         --lean-output-dir ${CMAKE_CURRENT_BINARY_DIR}
                         --lean-force-output
                         --lean-non-beq-type ast)
@@ -557,6 +555,7 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         ${lean_sail_common}
                         ${lean_sail_default}
                         ${sail_srcs}
@@ -572,6 +571,7 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         ${lean_sail_common}
                         ${lean_sail_executable}
                         ${sail_srcs}
@@ -592,6 +592,7 @@ foreach (xlen IN ITEMS 32 64)
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     COMMAND
                         ${SAIL_BIN}
+                        ${sail_common}
                         --lem
                         --lem-lib Riscv_extras
                         --lem-lib Riscv_extras_fdext
@@ -600,8 +601,6 @@ foreach (xlen IN ITEMS 32 64)
                         --isa-output-dir "${CMAKE_BINARY_DIR}/isabelle/${arch}"
                         # The prefix of the output files.
                         -o "${arch}"
-                        # Minimum required Sail compiler version.
-                        --require-version ${SAIL_REQUIRED_VER}
                         --config ${CMAKE_SOURCE_DIR}/config/default.json
                         # Input files.
                         ${sail_srcs}
