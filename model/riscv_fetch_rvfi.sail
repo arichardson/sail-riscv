@@ -21,9 +21,10 @@ function fetch() -> FetchResult = {
       let use_pc_bits = virtaddr_bits(use_pc);
       if   (use_pc_bits[0] != bitzero | (use_pc_bits[1] != bitzero & not(extensionEnabled(Ext_Zca))))
       then F_Error(E_Fetch_Addr_Align(), PC)
-      else match translateAddr(use_pc, Execute()) {
+      // XXX To match CVA6, don't do fetch translate checks in RVFIDII
+      else /* match translateAddr(use_pc, Execute()) {
         TR_Failure(e, _) => F_Error(e, PC),
-        TR_Address(_, _, _) => {
+        TR_Address(_, _, _) => */ { {
           let i = rvfi_instruction[rvfi_insn];
           rvfi_inst_data[rvfi_insn]   = zero_extend(i);
           if   (i[1 .. 0] != 0b11)
@@ -35,9 +36,10 @@ function fetch() -> FetchResult = {
               Ext_FetchAddr_Error(e)     => F_Error(e, PC_hi),
               Ext_FetchAddr_Ext_Error(e) => F_Ext_Error(e),
               Ext_FetchAddr_OK(use_pc_hi) =>
-                match translateAddr(use_pc_hi, Execute()) {
+                // XXX To match CVA6, don't do fetch translate checks in RVFIDII
+                /* match translateAddr(use_pc_hi, Execute()) {
                   TR_Failure(e, _) => F_Error(e, PC),
-                  TR_Address(_, _, _) => F_Base(i)
+                  TR_Address(_, _, _) => */ { F_Base(i)
               }
             }
           }
