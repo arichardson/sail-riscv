@@ -78,7 +78,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_mext.sail"
                 "riscv_insts_zicsr.sail"
                 "riscv_insts_hext.sail"
-                "riscv_insts_hints.sail"
+                "riscv_insts_reserved_fence.sail"
                 "cheri/cheri_csr_op.sail"
                 "riscv_insts_fext.sail"
                 "riscv_insts_zcf.sail"
