@@ -66,6 +66,21 @@ function writeback_vset(vtype_new: xlenbits, vl_new : xlenbits) -> unit = {
   csr_write_callback("vl", vl);
 }
 
+val handle_illegal_vtype : unit -> unit
+function handle_illegal_vtype() = {
+  /* Note: Implementations can set vill or trap with an illegal
+   * instruction if the vtype setting is not supported.
+   * TODO: configuration support for both solutions.
+   * NOTE: vstart should NOT be zeroed out if trapping.
+   */
+
+  vtype.bits = 0b1 @ zeros(xlen - 1); /* set vtype.vill */
+  vl = zeros();
+  csr_write_callback("vtype", vtype.bits);
+  csr_write_callback("vl", vl);
+  set_vstart(zeros());
+}
+
 let vl_use_ceil : bool = config extensions.V.vl_use_ceil
 
 function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
@@ -111,26 +126,34 @@ function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx)
         return RETIRE_SUCCESS
       };
 
-      unsigned(vl)
-    },
-    Some(avl) => avl
-  };
-
-  if  vtype_new[vill] == 0b1 |
-      vtype_new[reserved] != zeros() |
-      not(valid_eew_emul(SEW_new, LMUL_pow_new)) |
-      SEW_pow_new > LMUL_pow_new + ELEN_pow
-  then {
-    /* Note: Implementations can set vill or trap if the vtype setting is not supported.
-     * TODO: configuration support for both solutions
-     */
-    writeback_vill();
+  /* check new SEW and LMUL are legal and calculate VLMAX */
+  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
+    handle_illegal_vtype();
     return RETIRE_SUCCESS
   };
+  let LMUL_pow_new = lmul_pow_val(lmul);
+  let SEW_pow_new = sew_pow_val(sew);
 
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
-  let vl_new = calculate_new_vl(avl, VLMAX);
+  /* set vl according to VLMAX and AVL */
+  if (rs1 != zreg) then { /* normal stripmining */
+    let rs1_val = X(rs1);
+    let AVL = unsigned(rs1_val);
+    vl = calculate_new_vl(AVL, VLMAX);
+    X(rd) = vl;
+  } else if (rd != zreg) then { /* set vl to VLMAX */
+    vl = to_bits_unsafe(xlen, VLMAX);
+    X(rd) = vl;
+  } else { /* keep existing vl if it is compatible and vtype.ill is valid */
+    let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
+    let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
+    if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+  };
+
+  /* set vtype */
+  vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
 
   X(rd) = vl_new;
 
@@ -153,12 +176,24 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   let SEW_pow_ori   = get_sew_pow();
   let ratio_pow_ori = SEW_pow_ori - LMUL_pow_ori;
 
-  /* set vtype */
-  vtype.bits = X(rs2);
+  let vtype_new = Mk_Vtype(X(rs2));
+
+  if   vtype_new[vill] == 0b1 | vtype_new[reserved] != zeros()
+  then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+
+  let ma   = vtype_new[vma];
+  let ta   = vtype_new[vta];
+  let sew  = vtype_new[vsew];
+  let lmul = vtype_new[vlmul];
 
   /* check new SEW and LMUL are legal and calculate VLMAX */
-  let LMUL_pow_new = get_lmul_pow();
-  let SEW_pow_new  = get_sew_pow();
+  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
+    handle_illegal_vtype();
+    return RETIRE_SUCCESS
+  };
+  let LMUL_pow_new = lmul_pow_val(lmul);
+  let SEW_pow_new = sew_pow_val(sew);
+
   if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
   let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
 
@@ -169,14 +204,16 @@ function clause execute VSETVL(rs2, rs1, rd) = {
     vl = calculate_new_vl(AVL, VLMAX);
     X(rd) = vl;
   } else if (rd != zreg) then { /* set vl to VLMAX */
-    let AVL = unsigned(ones(xlen));
     vl = to_bits_unsafe(xlen, VLMAX);
     X(rd) = vl;
-  } else { /* keep existing vl */
-    let AVL = unsigned(vl);
+  } else { /* keep existing vl if it is compatible and vtype.ill is valid */
     let ratio_pow_new = SEW_pow_new - LMUL_pow_new;
-    if (ratio_pow_new != ratio_pow_ori) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
+    let is_legal_vset = ratio_pow_new == ratio_pow_ori & valid_vtype();
+    if not(is_legal_vset) then { handle_illegal_vtype(); return RETIRE_SUCCESS }
   };
+
+  /* set vtype */
+  vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
 
   /* reset vstart to 0 */
   set_vstart(zeros());
@@ -203,8 +240,35 @@ mapping clause encdec = VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd)
   <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
-function clause execute VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd) =
-  process_vset(0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul, Some(unsigned(uimm)), rd)
+function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
+  /* check new SEW and LMUL are legal and calculate VLMAX */
+  if is_invalid_lmul_pow(lmul) | is_invalid_sew_pow(sew) then {
+    handle_illegal_vtype();
+    return RETIRE_SUCCESS
+  };
+  let LMUL_pow_new = lmul_pow_val(lmul);
+  let SEW_pow_new = sew_pow_val(sew);
 
-mapping clause assembly = VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd)
+  if SEW_pow_new > (LMUL_pow_new + ELEN_pow) then { handle_illegal_vtype(); return RETIRE_SUCCESS };
+  let VLMAX = 2 ^ (VLEN_pow + LMUL_pow_new - SEW_pow_new);
+
+  /* set vl according to VLMAX and AVL */
+  let AVL = unsigned(uimm); /* AVL is encoded as 5-bit zero-extended imm in the rs1 field */
+  vl = calculate_new_vl(AVL, VLMAX);
+  X(rd) = vl;
+
+  /* set vtype */
+  vtype.bits = 0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul;
+
+  /* reset vstart to 0 */
+  set_vstart(zeros());
+
+  csr_write_callback("vtype", vtype.bits);
+  csr_write_callback("vl", vl);
+  csr_write_callback("vstart", zero_extend(vstart));
+
+  RETIRE_SUCCESS
+}
+
+mapping clause assembly = VSETIVLI(ma, ta, sew, lmul, uimm, rd)
   <-> "vsetivli" ^ spc() ^ reg_name(rd) ^ sep() ^ hex_bits_5(uimm) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
