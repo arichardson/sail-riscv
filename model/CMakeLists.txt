@@ -201,7 +201,6 @@ foreach (xlen IN ITEMS 32 64)
                 "cheri/cheri_vmem_types.sail"
                 "riscv_regs.sail"
                 "cheri/cheri_sys_regs_types.sail"
-                "cheri/cheri_sys_regs_seccfg.sail"
                 "cheri/cheri_sys_regs_xstatus.sail"
                 "riscv_sys_regs.sail"
                 "cheri/cheri_sys_regs_envcfg.sail"
