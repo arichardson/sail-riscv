@@ -19,7 +19,7 @@ function clause currentlyEnabled(Ext_Zvfh) = sys_enable_zvfh() & currentlyEnable
 function set_vstart(value : bits(16)) -> unit = {
   dirty_v_context();
   vstart = zero_extend(value[(VLEN_pow - 1) .. 0]);
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback("vstart", vstart);
 }
 
 mapping clause csr_name_map = 0x008  <-> "vstart"
@@ -38,7 +38,7 @@ function clause is_CSR_defined (0xC20) = currentlyEnabled(Ext_V) // vl
 function clause is_CSR_defined (0xC21) = currentlyEnabled(Ext_V) // vtype
 function clause is_CSR_defined (0xC22) = currentlyEnabled(Ext_V) // vlenb
 
-function clause read_CSR(0x008, _) = zero_extend(vstart)
+function clause read_CSR(0x008, _) = vstart
 function clause read_CSR(0x009, _) = zero_extend(vcsr[vxsat])
 function clause read_CSR(0x00A, _) = zero_extend(vcsr[vxrm])
 function clause read_CSR(0x00F, _) = zero_extend(vcsr.bits)
@@ -46,7 +46,7 @@ function clause read_CSR(0xC20, _) = vl
 function clause read_CSR(0xC21, _) = vtype.bits
 function clause read_CSR(0xC22, _) = VLENB
 
-function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); zero_extend(vstart) }
+function clause write_CSR(0x008, value) = { set_vstart(value[15 .. 0]); vstart }
 function clause write_CSR(0x009, value) = { ext_write_vcsr (vcsr[vxrm], value[0 .. 0]); zero_extend(vcsr[vxsat]) }
 function clause write_CSR(0x00A, value) = { ext_write_vcsr (value[1 .. 0], vcsr[vxsat]); zero_extend(vcsr[vxrm]) }
 function clause write_CSR(0x00F, value) = { ext_write_vcsr (value [2 .. 1], value [0 .. 0]); zero_extend(vcsr.bits) }

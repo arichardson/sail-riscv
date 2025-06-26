@@ -159,7 +159,7 @@ function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx)
 
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback("vstart", vstart);
 
   RETIRE_SUCCESS
 }
@@ -218,7 +218,14 @@ function clause execute VSETVL(rs2, rs1, rd) = {
   /* reset vstart to 0 */
   set_vstart(zeros());
 
-mapping clause assembly = VSETVL_TYPE(rs2, rs1, rd)
+  csr_write_callback("vtype", vtype.bits);
+  csr_write_callback("vl", vl);
+  csr_write_callback("vstart", vstart);
+
+  RETIRE_SUCCESS
+}
+
+mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
 /* ****************************** vsetvli ******************************* */
@@ -265,7 +272,7 @@ function clause execute VSETIVLI(ma, ta, sew, lmul, uimm, rd) = {
 
   csr_write_callback("vtype", vtype.bits);
   csr_write_callback("vl", vl);
-  csr_write_callback("vstart", zero_extend(vstart));
+  csr_write_callback("vstart", vstart);
 
   RETIRE_SUCCESS
 }
