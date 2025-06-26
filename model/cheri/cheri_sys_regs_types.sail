@@ -42,21 +42,6 @@ bitfield SEnvcfg : xlenbits = {
   FIOM   : 0,
 }
 
-// Zcherihybrid adds a CRE bit to mseccfg
-bitfield Seccfg : bits(64) = {
-  // Enable access to SEED in S-mode
-  SSEED  : 9,
-  // Enable access to SEED in U-mode
-  USEED  : 8,
-  // Reserved WPRI bits
-  wpri_1 : 7 .. 4,
-  // CHERI Register Enable
-  // Whether CHERI registers are enabled for M mode.
-  CRE : 3,
-  // Reserved WPRI bits
-  wpri_0 : 2 .. 0,
-}
-
 // Zcheripurecap requires xtval2
 bitfield Tval2 : xlenbits = {
   // Reserved WPRI bits
