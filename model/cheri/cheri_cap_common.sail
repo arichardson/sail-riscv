@@ -17,6 +17,9 @@ let  cap_addr_width = sizeof(cap_addr_width)
 type cap_len_width : Int = cap_addr_width + 1
 let  cap_len_width = sizeof(cap_len_width)
 
+type cap_max_len : Int = (2 ^ cap_len_width) - 1
+let  cap_max_len = sizeof(cap_max_len)
+
 let cap_max_addr = pow2(cap_addr_width) - 1
 
 // 64 or 128 bits.
@@ -28,7 +31,7 @@ type CapAddrInt   = range(0, (2 ^ cap_addr_width) - 1)
 
 // XLEN+1 (33 or 65).
 type CapLenBits   = bits(cap_len_width)
-type CapLenInt    = range(0, (2 ^ cap_len_width) - 1)
+type CapLenInt    = range(0, cap_max_len)
 
 // Width of TE and BE fields.
 type cap_xe_width : Int = div(cap_E_width, 2)
@@ -95,9 +98,9 @@ struct Capability = {
 // Decode compressed capability to a more convenient struct.
 function bitsToCap(tag : bool, cap_bits : CapBits) -> Capability = {
   // Decode metadata to fields.
-  let meta = Mk_EncMetadata(cap_bits[xlen * 2 - 1 .. xlen]);
+  let meta = dec_EncMetadata(cap_bits[xlen * 2 - 1 .. xlen]);
 
-  let internal_exponent = internal_exponent_encdec(meta[EF]);
+  let internal_exponent = internal_exponent_encdec(meta.EF);
 
   // For brevity and to match the spec.
   let 'MW = cap_mantissa_width;
@@ -110,12 +113,12 @@ function bitsToCap(tag : bool, cap_bits : CapBits) -> Capability = {
   let LMSB = if internal_exponent then 0b01 else 0b0 @ getMetadataL8(meta);
 
   // `not()` so type infererence for zeros() works.
-  let T_low = if not(internal_exponent) then meta[TE] else zeros();
-  let B_low = if not(internal_exponent) then meta[BE] else zeros();
+  let T_low = if not(internal_exponent) then meta.TE else zeros();
+  let B_low = if not(internal_exponent) then meta.BE else zeros();
 
   // Concatenate all the bits. Type annotations are not require but here for sanity checking.
-  let T : bits('MW - 2) = meta[Tm] @ T_low;
-  let B : bits('MW)     = meta[Bm] @ B_low;
+  let T : bits('MW - 2) = meta.Tm @ T_low;
+  let B : bits('MW)     = meta.Bm @ B_low;
 
   let LCout = if T <_u B[MW - 3 .. 0] then 0b01 else 0b00;
 
@@ -124,23 +127,23 @@ function bitsToCap(tag : bool, cap_bits : CapBits) -> Capability = {
 
   struct {
     tag               = tag,
-    sd_perms          = meta[SDP],
-    ap_m              = meta[AP_M],
-    cl                = meta[CL],
-    sealed            = bool_bits(meta[CT]),
+    sd_perms          = meta.SDP,
+    ap_m              = meta.AP_M,
+    cl                = meta.CL,
+    sealed            = bool_bits(meta.CT),
     internal_exponent = internal_exponent,
     E                 = E,
     B                 = B,
     T                 = T,
-    reserved_0        = meta[reserved_0],
-    reserved_1        = meta[reserved_1],
+    reserved_0        = meta.reserved_0,
+    reserved_1        = meta.reserved_1,
     address           = cap_bits[xlen - 1 .. 0],
   }
 }
 
 // Encode a capability to compressed form. Only the metadata is returned since
 // the tag and address are directly available in `cap`.
-function capToMetadataBits(cap : Capability) -> EncMetadata = {
+function capToMetadataBits(cap : Capability) -> bits(xlen) = {
   // Convert the exponent back to encoded form.
   let E = to_bits(cap_E_width, cap_max_E - cap.E);
 
@@ -161,8 +164,7 @@ function capToMetadataBits(cap : Capability) -> EncMetadata = {
 
   let MW = cap_mantissa_width;
 
-  let meta = [
-    Mk_EncMetadata(zeros()) with
+  let meta : EncMetadata = struct {
     SDP = cap.sd_perms,
     AP_M = cap.ap_m,
     CL = cap.cl,
@@ -173,10 +175,12 @@ function capToMetadataBits(cap : Capability) -> EncMetadata = {
     TE = TE,
     BE = BE,
     reserved_1 = cap.reserved_1,
-    reserved_0 = cap.reserved_0
-  ];
+    reserved_0 = cap.reserved_0,
+    L8 = zeros()
+  };
   // Set L8 on RV32. Does nothing on RV64.
-  setMetadataL8(meta, [L8])
+  let meta = setMetadataL8(meta, [L8]);
+  enc_EncMetadata(meta)
 }
 
 // Zero permission capability.
@@ -351,15 +355,15 @@ function unsealCap(cap : Capability) -> Capability =
 
 // A capability is malformed if it has a reserved permission encoding.
 function permsMalformed(cap : Capability) -> bool =
-  not(ap_m_encdec_forwards_matches(cap.ap_m))
+  not(ap_m_valid_bits(cap.ap_m))
 
 // Utility field functions.
 
 function getCapPermsAndMode(cap : Capability) -> option((ArchPerms, ExecutionMode)) =
-  if permsMalformed(cap) then None() else Some(ap_m_encdec(cap.ap_m))
+  if permsMalformed(cap) then None() else Some(ap_m_decode(cap.ap_m))
 
 function setCapPermsAndMode(cap : Capability, (perms, mode): (ArchPerms, ExecutionMode)) -> Capability =
-  {cap with ap_m = ap_m_encdec(legalizePermsAndMode(perms, mode))}
+  {cap with ap_m = ap_m_encode(legalizePermsAndMode(perms, mode))}
 
 function getArchPerms(cap : Capability) -> option(ArchPerms) =
   match getCapPermsAndMode(cap) {
@@ -633,7 +637,7 @@ function capToString(cap : Capability) -> string = {
     Some(base, top) => (bits_str(base), bits_str(zero_extend(cap_len_width + 3, top)), false)
   };
 
-  let len_str = bits_str(to_bits(cap_len_width + 3, getCapLength(cap)));
+  let len_str = bits_str(to_bits_unsafe(cap_len_width + 3, getCapLength(cap)));
 
   let (arch_perms_str, perms_malformed) : (string, bool) = match getArchPerms(cap) {
     None() => ("(malformed)", true),
@@ -658,7 +662,7 @@ function capToString(cap : Capability) -> string = {
 
   // Print the raw metadata bits if they didn't decode to help debugging
   let raw_str = if bounds_malformed | perms_malformed | reserved_malformed then
-    " raw:" ^ bits_str(capToMetadataBits(cap).bits)
+    " raw:" ^ bits_str(capToMetadataBits(cap))
   else
     "";
 

@@ -8,8 +8,8 @@ extern "C" {
 // Provides entropy for the scalar cryptography extension.
 mach_bits plat_get_16_random_bits(unit);
 
-unit load_reservation(mach_bits);
-bool match_reservation(mach_bits);
+unit load_reservation(sbits);
+bool match_reservation(sbits);
 unit cancel_reservation(unit);
 bool valid_reservation(unit);
 
@@ -23,7 +23,7 @@ bool sys_enable_experimental_extensions(unit);
 unit memea(mach_bits, sail_int);
 
 mach_bits plat_nmi_handler(unit u);
-mach_bits plat_pma_address(mach_bits i);
+sbits plat_pma_address(mach_bits i);
 mach_bits plat_pma_atomicSupport_int(mach_bits i);
 bool plat_pma_cacheable(mach_bits i);
 bool plat_pma_coherent(mach_bits i);
@@ -35,7 +35,7 @@ bool plat_pma_readable(mach_bits i);
 bool plat_pma_readIdempotent(mach_bits i);
 bool plat_pma_relaxed(mach_bits i);
 mach_bits plat_pma_reservability_int(mach_bits i);
-mach_bits plat_pma_size(mach_bits i);
+sbits plat_pma_size(mach_bits i);
 bool plat_pma_supportsCboZero(mach_bits i);
 bool plat_pma_taggable(mach_bits i);
 bool plat_pma_taggableAccessFaults(mach_bits i);

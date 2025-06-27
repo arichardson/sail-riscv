@@ -191,7 +191,7 @@ function clause execute (GCBASE(rd, cs1)) = {
  */
 function clause execute (GCHI(rd, cs1)) = {
   let capVal = C(cs1);
-  X(rd) = capToMetadataBits(capVal).bits;
+  X(rd) = capToMetadataBits(capVal);
   RETIRE_SUCCESS
 }
 
@@ -418,6 +418,7 @@ function clause execute (SCBNDSR(cd, cs1, rs2)) = {
   let length = X(rs2);
   let newBase = cs1_val.address;
   let newTop : CapLenBits = zero_extend(newBase) + zero_extend(length);
+  assert(2 ^ xlen <= cap_max_len);
   // inCapBoundsNoWrap returns false if the input bounds are malformed.
   let inBounds = inCapBoundsNoWrap(cs1_val, newBase, unsigned(length));
   let (_, newCap) : (bool, Capability) = setCapBounds(cs1_val, newBase, newTop);
@@ -451,6 +452,8 @@ function clause execute (SCBNDSI(cd, cs1, s, uimm5)) = {
   let length = if s == 0b1 then uimm5 @ 0b0000 else 0b0000 @ uimm5;
   let newBase = cs1_val.address;
   let newTop : CapLenBits = zero_extend(newBase) + zero_extend(length);
+  assert(xlen >= 32);
+  assert(512 <= cap_max_len);
   // inCapBoundsNoWrap returns false if the input bounds are malformed.
   let inBounds = inCapBoundsNoWrap(cs1_val, newBase, unsigned(length));
   let (exact, newCap) : (bool, Capability) = setCapBounds(cs1_val, newBase, newTop);
@@ -485,6 +488,7 @@ function clause execute (SCBNDS(cd, cs1, rs2)) = {
   let length = X(rs2);
   let newBase = cs1_val.address;
   let newTop : CapLenBits = zero_extend(newBase) + zero_extend(length);
+  assert(2 ^ xlen <= cap_max_len);
   // inCapBoundsNoWrap returns false if the input bounds are malformed.
   let inBounds = inCapBoundsNoWrap(cs1_val, newBase, unsigned(length));
   let (exact, newCap) : (bool, Capability) = setCapBounds(cs1_val, newBase, newTop);
@@ -630,6 +634,8 @@ function clause execute (SENTRY(cd, cs1)) = {
 enum CapAccessType = { Cap_Read, Cap_Write, Cap_ReadWrite }
 
 function cap_mem_access_exception(auth_val : Capability, Virtaddr(vaddr) : virtaddr, acc_type : CapAccessType) -> option(CapEx) = {
+  assert(xlen >= 32);
+  assert(cap_size <= cap_max_len);
   if not(capTaggedAndReservedValid(auth_val)) then {
     Some(CapEx_TagViolation)
   } else if capIsSealed(auth_val) then {

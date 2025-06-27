@@ -6,37 +6,37 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-type log2_cap_size : Int = 4
-let  log2_cap_size = sizeof(log2_cap_size)
+type log2_cap_size_64 : Int = 4
+let  log2_cap_size_64 = sizeof(log2_cap_size_64)
 
 // Software Defined Permissions
-type cap_sd_perms_width : Int = 4
-let  cap_sd_perms_width = sizeof(cap_sd_perms_width)
+type cap_sd_perms_width_64 : Int = 4
+let  cap_sd_perms_width_64 = sizeof(cap_sd_perms_width_64)
 
 // Width of reserved fields. Their values need to be preserved.
-type cap_reserved_1_width : Int = 7
-let  cap_reserved_1_width = sizeof(cap_reserved_1_width)
-type cap_reserved_0_width : Int = 15
-let  cap_reserved_0_width = sizeof(cap_reserved_0_width)
+type cap_reserved_1_width_64 : Int = 7
+let  cap_reserved_1_width_64 = sizeof(cap_reserved_1_width_64)
+type cap_reserved_0_width_64 : Int = 15
+let  cap_reserved_0_width_64 = sizeof(cap_reserved_0_width_64)
 
 // Width of the decoded B and T fields.
-type cap_mantissa_width : Int = 14
-let  cap_mantissa_width = sizeof(cap_mantissa_width)
+type cap_mantissa_width_64 : Int = 14
+let  cap_mantissa_width_64 = sizeof(cap_mantissa_width_64)
 
 // Bits required for maximum exponent.
 // TODO: If Sail had clog2 support we could calculate this from cap_max_E.
-type cap_E_width : Int  = 6
-let  cap_E_width = sizeof(cap_E_width)
+type cap_E_width_64 : Int  = 6
+let  cap_E_width_64 = sizeof(cap_E_width_64)
 
 // Bits required for Architectural Permissions and Mode
-type cap_AP_M_width : Int = 9
-let  cap_AP_M_width = sizeof(cap_AP_M_width)
+type cap_AP_M_width_64 : Int = 9
+let  cap_AP_M_width_64 = sizeof(cap_AP_M_width_64)
 
 // Whether setbounds can use the L8 bit for extra precision in the implied E=0 case.
-let cap_use_L8 : bool = false
+let cap_use_L8_64 : bool = false
 
 // Capability format metadata completely compressed. Tag is out of band.
-bitfield EncMetadata : bits(64) = {
+bitfield EncMetadata_64 : bits(64) = {
   // Upper reserved area (64-bit only).
   reserved_1 : 63 .. 57,
   // Software Defined Permissions.
@@ -68,7 +68,7 @@ bitfield EncMetadata : bits(64) = {
 // checked for outside the function, and the null fields returned.
 // Backwards match failures occur when encoding an unrepresentable combination of fields: this should be
 // prevented by calling legalizeFields when changing the fields.
-mapping ap_m_encdec : bits(cap_AP_M_width) <-> (ArchPerms, ExecutionMode) = {
+mapping ap_m_encdec_64 : bits(cap_AP_M_width_64) <-> (ArchPerms, ExecutionMode) = {
   execution_mode_encdec(M) @ bool_bits(SL) @ bool_bits(EL) @ bool_bits(LM) @
   bool_bits(ASR) @ bool_bits(X) @ bool_bits(R) @ bool_bits(W) @ bool_bits(C)
     if (not(ASR) | X) & (not(C) | (R | W)) & (M == execution_mode_encdec(0b0) | X) & (not(SL) | C) & (not(EL | LM) | (C & R)) <->
@@ -77,11 +77,11 @@ mapping ap_m_encdec : bits(cap_AP_M_width) <-> (ArchPerms, ExecutionMode) = {
 }
 
 // Ideally ap_m_encdec(({null,infinite}_perms, IntPtrMode)), but spurious incomplete match side-effect at toplevel
-let null_ap_m     = 0b000000000
-let infinite_ap_m = 0b111111111
+let null_ap_m_64     = 0b000000000
+let infinite_ap_m_64 = 0b111111111
 
 // Perform the XLEN-specific ACPERMS legalization.
-function legalizePermsAndMode(perms : ArchPerms, mode : ExecutionMode) -> (ArchPerms, ExecutionMode) = {
+function legalizePermsAndMode_64(perms : ArchPerms, mode : ExecutionMode) -> (ArchPerms, ExecutionMode) = {
   let perms = if perms.R | perms.W then perms else {perms with C=false};
   let perms = if perms.C & perms.R then perms else {perms with EL=false};
   let perms = if perms.C & perms.R then perms else {perms with LM=false};
@@ -92,9 +92,9 @@ function legalizePermsAndMode(perms : ArchPerms, mode : ExecutionMode) -> (ArchP
 }
 
 // Needed because there's no L8 in the RV64 version.
-function getMetadataL8(meta : EncMetadata) -> bits(1) = 0b0
-function setMetadataL8(meta : EncMetadata, L8 : bits(1)) -> EncMetadata = meta
+function getMetadataL8_64(meta : EncMetadata_64) -> bits(1) = 0b0
+function setMetadataL8_64(meta : EncMetadata_64, L8 : bits(1)) -> EncMetadata_64 = meta
 
 // Get the internal exponent. This is only meaningful if EF is "internal".
-function getMetadataInternalExponent(meta : EncMetadata) -> bits(cap_E_width) =
+function getMetadataInternalExponent_64(meta : EncMetadata_64) -> bits(cap_E_width_64) =
   meta[TE] @ meta[BE]

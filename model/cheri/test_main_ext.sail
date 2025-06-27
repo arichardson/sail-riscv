@@ -2,7 +2,7 @@ function test_cheri_cap_encoding() -> unit = {
     // Check the null cap decodes from all 0s.
     // In future we will encode it from all 0s so we won't need to check that.
     assert(bitsToCap(false, zeros()) == null_cap, "zeros don't decode to null capability");
-    assert(capToMetadataBits(null_cap).bits == zeros(), "null capability doesn't encode to zeros");
+    assert(capToMetadataBits(null_cap) == zeros(), "null capability doesn't encode to zeros");
 }
 
 function test_cheri_cram() -> unit = {
@@ -156,7 +156,7 @@ function test_cheri_l8() -> unit = {
 // The sail Capability datatype allows capabilities that could never actually
 // be encoded. This function will return false given these.
 function encodable(c : Capability) -> bool =
-    bitsToCap(c.tag, capToMetadataBits(c).bits @ c.address) == c
+    bitsToCap(c.tag, capToMetadataBits(c) @ c.address) == c
 
 function test_cheri_redundant() -> unit = {
     // Construct capabilities that are redundant with the L8 bit:

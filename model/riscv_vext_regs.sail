@@ -253,6 +253,7 @@ function read_single_vreg(num_elem, SEW, vrid) = {
   let bv     : vregtype                  = V(vrid);
   var result : vector('n, bits('m)) = vector_init(zeros());
 
+  assert(VLEN >= SEW);
   foreach (i from 0 to (num_elem - 1)) {
     // In case of register read for widening operation, the original implementation can reach out of bond.
     // Therefore cap the register read index and wrap around for overflow - those 2nd time read elements

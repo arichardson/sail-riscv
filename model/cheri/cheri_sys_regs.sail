@@ -37,7 +37,10 @@ register stval2    : Tval2
 // Return the minimum number of bytes in an instruction supported
 // by the implementation. If writable misa is supported then
 // this returns 2 irrespective of the value of misa[C].
-function min_instruction_bytes() -> CapAddrInt = if currentlyEnabled(Ext_Zca) then 2 else 4
+function min_instruction_bytes() -> CapLenInt = {
+  assert(4 <= (2 ^ cap_len_width) - 1); // Silence int(2) is not a subtype of range(0, (2 ^ (xlen + 1) - 1))
+  if currentlyEnabled(Ext_Zca) then 2 else 4
+}
 
 // Defined in riscv_sys_control.sail
 val feature_enabled_for_priv : (Privilege, bit, bit) -> bool
