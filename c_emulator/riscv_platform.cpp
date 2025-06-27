@@ -29,9 +29,9 @@ mach_bits plat_get_16_random_bits(unit)
 // either directly in `load_reservation()` or by callling
 // `cancel_reservation()`.
 
-unit load_reservation(mach_bits addr)
+unit load_reservation(sbits addr)
 {
-  reservation = addr;
+  reservation = addr.bits;
   reservation_valid = true;
   RESERVATION_DBG("reservation <- %0" PRIx64 "\n", reservation);
   return UNIT;
@@ -42,10 +42,10 @@ static mach_bits check_mask()
   return (zxlen == 32) ? 0x00000000FFFFFFFF : -1;
 }
 
-bool match_reservation(mach_bits addr)
+bool match_reservation(sbits addr)
 {
   mach_bits mask = check_mask();
-  bool ret = reservation_valid && (reservation & mask) == (addr & mask);
+  bool ret = reservation_valid && (reservation & mask) == (addr.bits & mask);
   RESERVATION_DBG("reservation(%c): %0" PRIx64 ", key=%0" PRIx64 ": %s\n",
                   reservation_valid ? 'v' : 'i', reservation, addr,
                   ret ? "ok" : "fail");
@@ -96,9 +96,11 @@ mach_bits plat_nmi_handler(unit u)
   return 0;
 }
 
-mach_bits plat_pma_address(mach_bits i)
-{
-  return 0;
+sbits plat_pma_address(mach_bits i) {
+  sbits result;
+  result.len = zphysaddrbits_len;
+  result.bits = 0;
+  return result;
 }
 
 mach_bits plat_pma_atomicSupport_int(mach_bits i)
@@ -156,9 +158,11 @@ mach_bits plat_pma_reservability_int(mach_bits i)
   return 2; // RsrvEventual (eventual success guarantee for LR/SC)
 }
 
-mach_bits plat_pma_size(mach_bits i)
-{
-  return 0xF0000000;
+sbits plat_pma_size(mach_bits i) {
+  sbits result;
+  result.len = zphysaddrbits_len;
+  result.bits = 0xF0000000;
+  return result;
 }
 
 bool plat_pma_supportsCboZero(mach_bits i)
@@ -223,7 +227,7 @@ bool sys_misa_x(unit u)
 
 mach_bits sys_pa_bits(unit u)
 {
-  return (zxlen_val == 32) ? 34 : 56;
+  return (zxlen == 32) ? 34 : 56;
 }
 
 mach_bits sys_pmp_writable(unit u)
@@ -238,5 +242,5 @@ bool sys_writable_stip(unit u)
 
 mach_bits sys_xcause_bits(unit u)
 {
-  return zxlen_val - 1;
+  return zxlen - 1;
 }

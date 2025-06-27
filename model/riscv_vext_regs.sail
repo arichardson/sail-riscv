@@ -253,6 +253,7 @@ function read_single_vreg(num_elem, SEW, vrid) = {
   let bv     : vregtype                  = V(vrid);
   var result : vector('n, bits('m)) = vector_init(zeros());
 
+  assert(VLEN >= SEW);
   foreach (i from 0 to (num_elem - 1)) {
     let start_index = i * SEW;
     result[i] = slice(bv, start_index, SEW);

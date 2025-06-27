@@ -73,8 +73,10 @@ function cheri_fetch_addr_check(start_addr : xlenbits, addr : xlenbits, auth_cap
   }
 }
 
-function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr_Check(ext_fetch_addr_error) =
+function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr_Check(ext_fetch_addr_error) = {
+  assert(2 <= cap_max_len);
   cheri_fetch_addr_check(start_pc, pc, PCC, 2)
+}
 
 function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit = {
   let capEx = err;
@@ -132,6 +134,7 @@ function get_cheri_mode_cap_addr (base_reg : regidx, offset : xlenbits) =
 
 function ext_data_get_addr(base_reg : regidx, offset : xlenbits, acc : AccessType(ext_access_type), width : range(0, max_mem_access))
          -> Ext_DataAddr_Check(ext_data_addr_error) = {
+  assert(sizeof(max_mem_access) <= cap_max_len);
   let (auth_val, newAddr) = get_cheri_mode_cap_addr(base_reg, offset);
 
   let (have_rqd_load_perm, have_rqd_store_perm, have_rqd_asr_perm) : (bool, bool, bool) = match acc {
