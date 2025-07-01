@@ -1106,13 +1106,11 @@ mapping clause assembly = AMOSwapCap(cd, cs2, rs1, aq, rl)   <-> "amoswap.c" ^ m
   adding the decodings here.
 */
 mapping clause encdec = LOADRES(aq, rl, rs1, size, rd)
-      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
   <-> 0b00010 @ bool_bits(aq) @ bool_bits(rl) @ 0b00000 @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
+      when currentlyEnabled(Ext_Zalrsc) & ((size == 1) | (size == 2))
 mapping clause encdec = STORECON(aq, rl, rs2, rs1, size, rd)
-      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
   <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b0 @ size_enc(size) @ encdec_reg(rd) @ 0b0101111
-      if currentlyEnabled(Ext_Zalrsc) & ((size == BYTE) | (size == HALF))
+      when currentlyEnabled(Ext_Zalrsc) & ((size == 1) | (size == 2))
 
 /*
  * Encoding/assembly mappings for capmode specific instructions. This does not
