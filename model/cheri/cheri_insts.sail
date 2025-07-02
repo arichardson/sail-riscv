@@ -8,7 +8,7 @@
 
 /* Capability versions of mode-dependent instructions */
 
-union clause ast = AUIPC_capmode : (bits(20), regidx)
+union clause instruction = AUIPC_capmode : (bits(20), regidx)
 /*!
  * insnref: auipc_32bit capmode
  * Add upper immediate to *pc* /pcc
@@ -28,7 +28,7 @@ function clause execute AUIPC_capmode(imm, cd) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = JAL_capmode : (bits(21), regidx)
+union clause instruction = JAL_capmode : (bits(21), regidx)
 /*!
  * insnref: jal_32bit capmode
  * Jump and link
@@ -59,7 +59,7 @@ function clause execute(JAL_capmode(imm, cd)) = {
   }
 }
 
-union clause ast = JALR_capmode : (bits(12), regidx, regidx)
+union clause instruction = JALR_capmode : (bits(12), regidx, regidx)
 /*!
  * insnref: jalr_32bit capmode
  * Jump and link register
@@ -111,13 +111,13 @@ function clause execute(JALR_capmode(imm, cs1, cd)) = {
 
 /* Operations that extract parts of a capability into GPR */
 
-union clause ast = GCPERM : (regidx, regidx)
-union clause ast = GCBASE : (regidx, regidx)
-union clause ast = GCLEN  : (regidx, regidx)
-union clause ast = GCTAG  : (regidx, regidx)
-union clause ast = GCHI   : (regidx, regidx)
-union clause ast = GCMODE : (regidx, regidx)
-union clause ast = GCTYPE : (regidx, regidx)
+union clause instruction = GCPERM : (regidx, regidx)
+union clause instruction = GCBASE : (regidx, regidx)
+union clause instruction = GCLEN  : (regidx, regidx)
+union clause instruction = GCTAG  : (regidx, regidx)
+union clause instruction = GCHI   : (regidx, regidx)
+union clause instruction = GCMODE : (regidx, regidx)
+union clause instruction = GCTYPE : (regidx, regidx)
 
 /*!
  * insnref: gcmode_32bit brief
@@ -195,7 +195,7 @@ function clause execute (GCHI(rd, cs1)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCHI : (regidx, regidx, regidx)
+union clause instruction = SCHI : (regidx, regidx, regidx)
 /*!
  * insnref: schi_32bit
  * Capability set metadata
@@ -248,7 +248,7 @@ function clause execute (GCTAG(rd, cs1)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = ACPERM : (regidx, regidx, regidx)
+union clause instruction = ACPERM : (regidx, regidx, regidx)
 /*!
  * insnref: acperm_32bit brief
  * Mask capability permissions
@@ -275,7 +275,7 @@ function clause execute(ACPERM(cd, cs1, rs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCMODE : (regidx, regidx, regidx)
+union clause instruction = SCMODE : (regidx, regidx, regidx)
 /*!
  * insnref: scmode_32bit
  * Capability set CHERI execution mode
@@ -300,7 +300,7 @@ function clause execute(SCMODE(cd, cs1, rs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = MODESW : (ExecutionMode)
+union clause instruction = MODESW : (ExecutionMode)
 /*!
  * insnref: modesw_32bit
  * Switch CHERI execution mode
@@ -329,7 +329,7 @@ function clause execute(MODESW(mode)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = CADD : (regidx, regidx, regidx)
+union clause instruction = CADD : (regidx, regidx, regidx)
 /*!
  * insnref: cadd_32bit
  * Capability pointer increment
@@ -355,7 +355,7 @@ function clause execute (CADD(cd, cs1, rs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = CADDI : (regidx, regidx, bits(12))
+union clause instruction = CADDI : (regidx, regidx, bits(12))
 /*!
  * insnref: cadd_32bit
  * Capability pointer increment
@@ -381,7 +381,7 @@ function clause execute (CADDI(cd, cs1, imm)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCADDR : (regidx, regidx, regidx)
+union clause instruction = SCADDR : (regidx, regidx, regidx)
 /*!
  * insnref: scaddr_32bit
  * Capability set address
@@ -398,7 +398,7 @@ function clause execute (SCADDR(cd, cs1, rs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCBNDSR : (regidx, regidx, regidx)
+union clause instruction = SCBNDSR : (regidx, regidx, regidx)
 /*!
  * insnref: scbndsr_32bit
  * Capability set bounds, rounding up if necessary
@@ -430,7 +430,7 @@ function clause execute (SCBNDSR(cd, cs1, rs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCBNDSI : (regidx, regidx, bits(1), bits(5))
+union clause instruction = SCBNDSI : (regidx, regidx, bits(1), bits(5))
 /*!
  * insnref: scbnds_32bit
  * Capability set bounds
@@ -466,7 +466,7 @@ function clause execute (SCBNDSI(cd, cs1, s, uimm5)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCBNDS : (regidx, regidx, regidx)
+union clause instruction = SCBNDS : (regidx, regidx, regidx)
 /*!
  * insnref: scbnds_32bit
  * Capability set bounds
@@ -500,7 +500,7 @@ function clause execute (SCBNDS(cd, cs1, rs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = CMV : (regidx, regidx)
+union clause instruction = CMV : (regidx, regidx)
 /*!
  * insnref: cmv_32bit
  * Capability move
@@ -515,7 +515,7 @@ function clause execute (CMV(cd, cs1)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = CBLD : (regidx, regidx, regidx)
+union clause instruction = CBLD : (regidx, regidx, regidx)
 /*!
  * insnref: cbld_32bit
  * Capability build
@@ -551,7 +551,7 @@ function clause execute (CBLD(cd, cs1, cs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = CRAM : (regidx, regidx)
+union clause instruction = CRAM : (regidx, regidx)
 /*!
  * insnref: cram_32bit
  * Get Capability Representable Alignment Mask (CRAM)
@@ -568,7 +568,7 @@ function clause execute(CRAM(rd, rs1)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCSS : (regidx, regidx, regidx)
+union clause instruction = SCSS : (regidx, regidx, regidx)
 /*!
  * insnref: scss_32bit
  * Capability test subset
@@ -597,7 +597,7 @@ function clause execute (SCSS(rd, cs1, cs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SCEQ : (regidx, regidx, regidx)
+union clause instruction = SCEQ : (regidx, regidx, regidx)
 /*!
  * insnref: sceq_32bit
  * Set if Capabilities are EQual
@@ -614,7 +614,7 @@ function clause execute (SCEQ(rd, cs1, cs2)) = {
   RETIRE_SUCCESS
 }
 
-union clause ast = SENTRY : (regidx, regidx)
+union clause instruction = SENTRY : (regidx, regidx)
 /*!
  * insnref: sentry_32bit
  * Seal capability as sealed entry.
@@ -675,7 +675,7 @@ function cap_mem_standard_errors(auth_val : Capability, vaddr : virtaddr, acc_ty
   }
 }
 
-union clause ast = LoadResCap : (regidx, regidx, bool, bool)
+union clause instruction = LoadResCap : (regidx, regidx, bool, bool)
 /*
  * insnref: load_res_cap_32bit modedep
  * Load Reserved Capability (LR.C), 32-bit encodings
@@ -727,7 +727,7 @@ function clause execute (LoadResCap(cd, rs1_cs1, aq, rl)) = {
   }
 }
 
-union clause ast = LoadCapImm : (regidx, regidx, bits(12))
+union clause instruction = LoadCapImm : (regidx, regidx, bits(12))
 /*!
  * insnref: load_32bit_cap modedep
  * Load capability
@@ -785,7 +785,7 @@ function clause execute LoadCapImm(cd, rs1_cs1, imm) = {
   }
 }
 
-union clause ast = StoreCapImm : (regidx, regidx, bits(12))
+union clause instruction = StoreCapImm : (regidx, regidx, bits(12))
 /*!
  * insnref: store_32bit_cap modedep
  * Store capability
@@ -842,7 +842,7 @@ function clause execute StoreCapImm(cs2, rs1_cs1, imm) = {
   }
 }
 
-union clause ast = StoreCondCap : (regidx, regidx, regidx, bool, bool)
+union clause instruction = StoreCondCap : (regidx, regidx, regidx, bool, bool)
 /*!
  * insnref: store_cond_cap_32bit modedep
  * Store Conditional (SC.C), 32-bit encoding
@@ -907,7 +907,7 @@ function clause execute StoreCondCap(rd, cs2, rs1_cs1, aq, rl) = {
   }
 }
 
-union clause ast = AMOSwapCap : (regidx, regidx, regidx, bool, bool)
+union clause instruction = AMOSwapCap : (regidx, regidx, regidx, bool, bool)
 /*!
  * insnref: amoswap_32bit_cap modedep
  * Atomic Operation (AMOSWAP.C), 32-bit encoding

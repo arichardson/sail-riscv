@@ -10,8 +10,8 @@
  * We add a separate capability-mode encdec clause to handle encodings that overlap
  * with baseline RISC-V encodings.
  */
-val encdec_capmode : ast <-> bits(32)
+val encdec_capmode : instruction <-> bits(32)
 scattered mapping encdec_capmode
 
-val encdec_compressed_capmode : ast <-> bits(16)
+val encdec_compressed_capmode : instruction <-> bits(16)
 scattered mapping encdec_compressed_capmode

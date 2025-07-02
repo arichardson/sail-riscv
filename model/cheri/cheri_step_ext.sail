@@ -76,7 +76,7 @@ function ext_post_step_hook() -> unit = ()
 
 // Print an instruction we are executing. For CHERI we print the mode too.
 function ext_print_instr forall 'n, 'n in {16, 32} . (
-  step_no : int, ast : ast, opcode : bits('n)
+  step_no : int, instruction : instruction, opcode : bits('n)
 ) -> unit = {
   if get_config_print_instr()
   then {
@@ -86,7 +86,7 @@ function ext_print_instr forall 'n, 'n in {16, 32} . (
     };
     print_instr(
       "[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege()) ^ "," ^ cheri_mode ^ "]: " ^
-      BitStr(PC) ^ " (" ^ BitStr(opcode) ^ ") " ^ to_str(ast)
+      BitStr(PC) ^ " (" ^ BitStr(opcode) ^ ") " ^ to_str(instruction)
     );
   };
 }

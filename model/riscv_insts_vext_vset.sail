@@ -100,7 +100,7 @@ function calculate_new_vl(AVL : int, VLMAX : int) -> xlenbits = {
 
 function writeback_vill() -> unit = writeback_vset(0b1 @ zeros(xlen - 1), zeros())
 /* *********************************** vsetvli *********************************** */
-union clause ast = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
+union clause instruction = VSETVLI : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
 
 mapping clause encdec = VSETVLI(ma, ta, sew, lmul, rs1, rd)
   <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
@@ -167,7 +167,10 @@ function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx)
 mapping clause assembly = VSETVLI(ma, ta, sew, lmul, rs1, rd)
   <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ ta_flag(ta) ^ ma_flag(ma)
 
-mapping clause encdec = VSETVL_TYPE(rs2, rs1, rd)
+/* *********************************** vsetvl ************************************ */
+union clause instruction = VSETVL : (regidx, regidx, regidx)
+
+mapping clause encdec = VSETVL(rs2, rs1, rd)
   <-> 0b1000000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111
   when currentlyEnabled(Ext_V)
 
@@ -228,20 +231,11 @@ function clause execute VSETVL(rs2, rs1, rd) = {
 mapping clause assembly = VSETVL(rs2, rs1, rd)
   <-> "vsetvl" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ reg_name(rs2)
 
-/* ****************************** vsetvli ******************************* */
-union clause ast = VSETVLI_TYPE : (bits(1), bits(1), bits(3), bits(3), regidx, regidx)
-
-mapping clause encdec = VSETVLI_TYPE(ma, ta, sew, lmul, rs1, rd)                           if currentlyEnabled(Ext_V)
-  <-> 0b0000 @ ma @ ta @ sew @ lmul @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b1010111 if currentlyEnabled(Ext_V)
-
-function clause execute VSETVLI_TYPE(ma, ta, sew, lmul, rs1, rd) =
-  process_vset(0b0 @ zeros(xlen - 9) @ ma @ ta @ sew @ lmul, get_avl(rd, rs1), rd)
-
-mapping clause assembly = VSETVLI_TYPE(ma, ta, sew, lmul, rs1, rd)
-  <-> "vsetvli" ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1) ^ sep() ^ sew_flag(sew) ^ maybe_lmul_flag(lmul) ^ maybe_ta_flag(ta) ^ maybe_ma_flag(ma)
+/* ********************************** vsetivli *********************************** */
+union clause instruction = VSETIVLI : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
 /* ********************************* vsetivli ************************************ */
-union clause ast = VSETIVLI_TYPE : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
+union clause instruction = VSETIVLI_TYPE : ( bits(1), bits(1), bits(3), bits(3), bits(5), regidx)
 
 mapping clause encdec = VSETIVLI_TYPE(ma, ta, sew, lmul, uimm, rd)
   <-> 0b1100 @ ma @ ta @ sew @ lmul @ uimm @ 0b111 @ encdec_reg(rd) @ 0b1010111

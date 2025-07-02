@@ -87,13 +87,13 @@ val test_cheri_zba_mode : (bitvector(32), regidx) -> unit
 function test_cheri_zba_mode(instBits, resR) = {
     // Check that integer mode uses integer instructions
     PCC = {setCapMode(PCC, IntPtrMode)};
-    let ast = ext_decode(instBits);
-    assert(execute(ast) == RETIRE_SUCCESS);
+    let instruction = ext_decode(instBits);
+    assert(execute(instruction) == RETIRE_SUCCESS);
     assert(not(C(resR).tag));
     // Check that cap mode uses capability instructions
     PCC = {setCapMode(PCC, CapPtrMode)};
-    let ast = ext_decode(instBits);
-    assert(execute(ast) == RETIRE_SUCCESS);
+    let instruction = ext_decode(instBits);
+    assert(execute(instruction) == RETIRE_SUCCESS);
     assert(C(resR).tag)
 }
 
@@ -390,7 +390,7 @@ function test_cheri_csr_access_control() -> unit = {
 function assert_behaviour(inCap : Capability,
                           capR : regidx,
                           outR : regidx,
-                          instruction : ast,
+                          instruction : instruction,
                           exc : option(CapEx),
                           outIsCap : bool,
                           outCap : Capability,
