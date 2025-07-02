@@ -19,12 +19,12 @@ function ext_post_step_hook() -> unit = track_post_step_hook()
 
 // Print an instruction we are executing. This can be overridden for CHERI.
 function ext_print_instr forall 'n, 'n in {16, 32} . (
-  step_no : int, ast : ast, opcode : bits('n)
+  step_no : int, instruction : instruction, opcode : bits('n)
 ) -> unit = {
   if get_config_print_instr()
   then print_instr(
     "[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege()) ^ "]: " ^
-    BitStr(PC) ^ " (" ^ BitStr(opcode) ^ ") " ^ to_str(ast)
+    BitStr(PC) ^ " (" ^ BitStr(opcode) ^ ") " ^ to_str(instruction)
   );
 }
 

@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 /* ****************************************************************** */
-union clause ast = ZBA_RTYPEUW_capmode : (regidx, regidx, regidx, bropw_zba)
+union clause instruction = ZBA_RTYPEUW_capmode : (regidx, regidx, regidx, bropw_zba)
 
 mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, ADDUW)           if currentlyEnabled(Ext_Zba) & xlen == 64
   <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
@@ -59,8 +59,8 @@ function clause execute (ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBA_SH4ADDUW : (regidx, regidx, regidx)
-union clause ast = ZBA_SH4ADDUW_capmode : (regidx, regidx, regidx)
+union clause instruction = ZBA_SH4ADDUW : (regidx, regidx, regidx)
+union clause instruction = ZBA_SH4ADDUW_capmode : (regidx, regidx, regidx)
 
 mapping clause encdec = ZBA_SH4ADDUW(cs2, rs1, cd)                                       if currentlyEnabled(Ext_Zba) & xlen == 64
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
@@ -112,7 +112,7 @@ function clause execute (ZBA_SH4ADDUW_capmode(cs2, rs1, cd)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBA_RTYPE_capmode : (regidx, regidx, regidx, brop_zba)
+union clause instruction = ZBA_RTYPE_capmode : (regidx, regidx, regidx, brop_zba)
 
 mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, SH1ADD)            if currentlyEnabled(Ext_Zba)
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
@@ -149,8 +149,8 @@ function clause execute (ZBA_RTYPE_capmode(cs2, rs1, cd, op)) = {
 }
 
 /* ****************************************************************** */
-union clause ast = ZBA_SH4ADD : (regidx, regidx, regidx)
-union clause ast = ZBA_SH4ADD_capmode : (regidx, regidx, regidx)
+union clause instruction = ZBA_SH4ADD : (regidx, regidx, regidx)
+union clause instruction = ZBA_SH4ADD_capmode : (regidx, regidx, regidx)
 
 mapping clause encdec = ZBA_SH4ADD(rs2, rs1, rd)                                         if currentlyEnabled(Ext_Zba) & xlen == 64
   <-> 0b0010000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b111 @ encdec_reg(rd) @ 0b0110011 if currentlyEnabled(Ext_Zba) & xlen == 64

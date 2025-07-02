@@ -9,7 +9,7 @@
 /* Put the illegal instructions last to use their wildcard match. */
 
 /* Wilcard match for 32-bit non-capmode encodings. */
-union clause ast = NOT_CAPMODE : word
+union clause instruction = NOT_CAPMODE : word
 function clause execute(NOT_CAPMODE(s)) = {
   internal_error(__FILE__, __LINE__, "should be unreachable: execute(NOT_CAPMODE(" ^ BitStr(s) ^ "))");
   Illegal_Instruction()
@@ -18,7 +18,7 @@ mapping clause encdec_capmode = NOT_CAPMODE(s) <-> s
 end encdec_capmode
 
 /* Wilcard match for 16-bit non-capmode encodings. */
-union clause ast = NOT_C_CAPMODE : half
+union clause instruction = NOT_C_CAPMODE : half
 function clause execute(NOT_C_CAPMODE(s)) = {
   internal_error(__FILE__, __LINE__, "should be unreachable: execute(NOT_C_CAPMODE(" ^ BitStr(s) ^ "))");
   Illegal_Instruction()

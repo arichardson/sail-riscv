@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function ext_decode_compressed(bv : bits(16)) -> ast = {
+function ext_decode_compressed(bv : bits(16)) -> instruction = {
   match effective_cheri_mode() {
     CapPtrMode => {
       match(encdec_compressed_capmode(bv)) {
@@ -19,7 +19,7 @@ function ext_decode_compressed(bv : bits(16)) -> ast = {
   }
 }
 
-function ext_decode(bv : bits(32)) -> ast = {
+function ext_decode(bv : bits(32)) -> instruction = {
   match effective_cheri_mode() {
     CapPtrMode => {
       match(encdec_capmode(bv)) {

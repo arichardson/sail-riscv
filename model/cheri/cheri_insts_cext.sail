@@ -7,7 +7,7 @@
 /*=======================================================================================*/
 
 /* Compressed capability loads/stores (encodings differ between RV32/RV64) */
-union clause ast = C_LC : (cregidx, cregidx, bits(9))
+union clause instruction = C_LC : (cregidx, cregidx, bits(9))
 
 // This instruction is only available in capability encoding mode.
 // For RV32 this replaces the encoding of [C.FLW], RV64 uses [C.FLD].
@@ -38,7 +38,7 @@ function clause execute(C_LC(cdc, csc1, uimm)) = {
   execute(LoadCapImm(cd, cs1, zero_extend(uimm)))
 }
 
-union clause ast = C_LCSP : (regidx, bits(10))
+union clause instruction = C_LCSP : (regidx, bits(10))
 
 // This instruction is only available in capability encoding mode.
 // For RV32 this replaces the encoding of [C.FLWSP], RV64 uses [C.FLDSP].
@@ -77,7 +77,7 @@ mapping clause encdec_compressed_capmode = C_ILLEGAL(0b001 @ ui5 @ 0b00000 @ ui4
 mapping clause encdec_compressed_capmode = C_ILLEGAL(0b011 @ ui5 @ 0b00000 @ ui43 @ ui86 @ 0b10) if xlen == 32
   <-> 0b011 @ ui5 : bits(1) @ 0b00000 @ ui43 : bits(2) @ ui86 : bits(3) @ 0b10                   if xlen == 32
 
-union clause ast = C_SC : (cregidx, cregidx, bits(9))
+union clause instruction = C_SC : (cregidx, cregidx, bits(9))
 
 // This instruction is only available in capability encoding mode.
 // For RV32 this replaces the encoding of [C.FSW], RV64 uses [C.FSD].
@@ -109,7 +109,7 @@ function clause execute(C_SC(csc2, csc1, uimm)) = {
   execute(StoreCapImm(cs2, cs1, zero_extend(uimm)))
 }
 
-union clause ast = C_SCSP : (regidx, bits(10))
+union clause instruction = C_SCSP : (regidx, bits(10))
 
 // This instruction is only available in capability encoding mode.
 /// For RV32 this replaces the encoding of [C.FSWSP], RV64 uses [C.FSDSP].
@@ -139,7 +139,7 @@ function clause execute(C_SCSP(cs2, uimm)) =
   execute(StoreCapImm(cs2, sp, zero_extend(uimm)))
 
 /* Capability arithmetic instructions */
-union clause ast = C_ADDI16SP_capmode : (bits(10))
+union clause instruction = C_ADDI16SP_capmode : (bits(10))
 
 // This instruction is only available in capability encoding mode.
 // This instruction replaces the encoding of [C.ADDI16SP].
@@ -167,7 +167,7 @@ mapping clause assembly = C_ADDI16SP_capmode(nzimm) if nzimm != 0b0000000000
 function clause execute(C_ADDI16SP_capmode(nzimm)) =
   execute(CADDI(sp, sp, sign_extend(nzimm)))
 
-union clause ast = C_ADDI4SPN_capmode : (cregidx, bits(10))
+union clause instruction = C_ADDI4SPN_capmode : (cregidx, bits(10))
 
 // This instruction is only available in capability encoding mode.
 // This instruction replaces the encoding of [C.ADDI4SPN].
@@ -198,7 +198,7 @@ function clause execute(C_ADDI4SPN_capmode(cdc, nzuimm)) = {
 }
 
 /* Control flow */
-union clause ast = C_JALR_capmode : (regidx)
+union clause instruction = C_JALR_capmode : (regidx)
 
 // This instruction is only available in capability encoding mode.
 // This instruction replaces the encoding of [C.JALR].
@@ -221,7 +221,7 @@ mapping clause assembly = C_JALR_capmode(cs1)              if cs1 != zreg
  */
 function clause execute(C_JALR_capmode(cs1)) = execute(JALR_capmode(zeros(), cs1, ra))
 
-union clause ast = C_JR_capmode : (regidx)
+union clause instruction = C_JR_capmode : (regidx)
 
 // This instruction is only available in capability encoding mode.
 // This instruction replaces the encoding of [C.JR].
@@ -244,7 +244,7 @@ mapping clause assembly = C_JR_capmode(cs1) if cs1 != zreg
  */
 function clause execute(C_JR_capmode(cs1)) = execute(JALR_capmode(zeros(), cs1, zreg))
 
-union clause ast = C_JAL_capmode : (bits(12))
+union clause instruction = C_JAL_capmode : (bits(12))
 
 // This instruction is only available in capability encoding mode.
 // This instruction is only available in RV32.
@@ -265,7 +265,7 @@ mapping clause assembly = C_JAL_capmode(imm) if xlen == 32
  */
 function clause execute(C_JAL_capmode(imm)) = execute(JAL_capmode(sign_extend(imm), ra))
 
-union clause ast = C_MV_capmode : (regidx, regidx)
+union clause instruction = C_MV_capmode : (regidx, regidx)
 
 // This instruction is only available in capability encoding mode.
 // This instruction replaces the encoding of [C.MV].
