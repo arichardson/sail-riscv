@@ -68,13 +68,19 @@ function default_handle_csr_op(
       CSRRS => csr_val | rs1_val,
       CSRRC => csr_val & ~(rs1_val)
     };
-    let final_val = write_CSR(csr, new_val);
-    csr_write_callback(csr, final_val);
+    match write_CSR(csr, new_val) {
+      Ok(final_val) => {
+        csr_write_callback(csr, final_val);
+        X(rd) = csr_val;
+        RETIRE_SUCCESS
+      },
+      Err(()) => Illegal_Instruction()
+    }
   } else {
     csr_read_callback(csr, csr_val);
-  };
-  X(rd) = csr_val;
-  RETIRE_SUCCESS
+    X(rd) = csr_val;
+    RETIRE_SUCCESS
+  }
 }
 
 function clause execute CSRReg(csr, rs1, rd, op) =

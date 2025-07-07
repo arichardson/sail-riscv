@@ -120,7 +120,7 @@ function clause read_CSR(0x141) = get_sepc()
 function clause read_CSR(0x305) = get_mtvec()
 function clause read_CSR(0x341) = get_mepc()
 
-function clause write_CSR(0x105, value) = { set_stvec(value); get_stvec() }
-function clause write_CSR(0x141, value) = { set_sepc(value); get_sepc() }
-function clause write_CSR(0x305, value) = { set_mtvec(value); get_mtvec() }
-function clause write_CSR(0x341, value) = { set_mepc(value); get_mepc() }
+function clause write_CSR(0x105, value) = { set_stvec(value); Ok(get_stvec()) }
+function clause write_CSR(0x141, value) = { set_sepc(value); Ok(get_sepc()) }
+function clause write_CSR(0x305, value) = { set_mtvec(value); Ok(get_mtvec()) }
+function clause write_CSR(0x341, value) = { set_mepc(value); Ok(get_mepc()) }
