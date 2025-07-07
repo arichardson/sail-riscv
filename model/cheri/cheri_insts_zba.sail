@@ -7,19 +7,14 @@
 /*=======================================================================================*/
 
 /* ****************************************************************** */
-union clause instruction = ZBA_RTYPEUW_capmode : (regidx, regidx, regidx, bropw_zba)
+union clause instruction = ZBA_RTYPEUW_capmode : (regidx, regidx, regidx, shamt_zba)
 
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, ADDUW)           if currentlyEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, SH1ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, SH2ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, SH3ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, shamt)
+  <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ shamt @ 0b0 @ encdec_reg(cd) @ 0b0111011
+  when currentlyEnabled(Ext_Zba) & xlen == 64
 
-mapping clause assembly = ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)
-  <-> zba_rtypeuw_mnemonic(op) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1) ^ sep() ^ cap_reg_name(cs2)
+mapping clause assembly = ZBA_RTYPEUW_capmode(cs2, rs1, cd, shamt)
+  <-> zba_rtypeuw_mnemonic(shamt) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1) ^ sep() ^ cap_reg_name(cs2)
 
 /*!
  * insnref: sh123adduw_32bit capmode
@@ -44,15 +39,9 @@ mapping clause assembly = ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)
  * the tag if the resulting capability is unrepresentable or cs2 is
  * sealed.
  */
-function clause execute (ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)) = {
+function clause execute (ZBA_RTYPEUW_capmode(cs2, rs1, cd, shamt)) = {
   let rs1_val = X(rs1);
   let cs2_val = C(cs2);
-  let shamt : range(0,3) = match op {
-    ADDUW    => 0,
-    SH1ADDUW => 1,
-    SH2ADDUW => 2,
-    SH3ADDUW => 3,
-  };
   let result = incCapAddrChecked(cs2_val, zero_extend(rs1_val[31..0]) << shamt);
   C(cd) = result;
   RETIRE_SUCCESS
@@ -112,17 +101,14 @@ function clause execute (ZBA_SH4ADDUW_capmode(cs2, rs1, cd)) = {
 }
 
 /* ****************************************************************** */
-union clause instruction = ZBA_RTYPE_capmode : (regidx, regidx, regidx, brop_zba)
+union clause instruction = ZBA_RTYPE_capmode : (regidx, regidx, regidx, shamt_zba)
 
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, SH1ADD)            if currentlyEnabled(Ext_Zba)
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, SH2ADD)            if currentlyEnabled(Ext_Zba)
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, SH3ADD)            if currentlyEnabled(Ext_Zba)
-  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
+mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, shamt)
+  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ shamt @ 0b0 @ encdec_reg(cd) @ 0b0110011
+  when shamt != 0b00 & currentlyEnabled(Ext_Zba)
 
-mapping clause assembly = ZBA_RTYPE_capmode(cs2, rs1, cd, op)
-  <-> zba_rtype_mnemonic(op) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1) ^ sep() ^ cap_reg_name(cs2)
+mapping clause assembly = ZBA_RTYPE_capmode(cs2, rs1, cd, shamt)
+  <-> zba_rtype_mnemonic(shamt) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1) ^ sep() ^ cap_reg_name(cs2)
 
 /*!
  * insnref: sh123add_32bit capmode
@@ -135,14 +121,9 @@ mapping clause assembly = ZBA_RTYPE_capmode(cs2, rs1, cd, op)
  * capability is 0 if cs2 did not have its tag set to 1, the incremented
  * address is outside cs2 's Representable Range or cs2 is sealed.
  */
-function clause execute (ZBA_RTYPE_capmode(cs2, rs1, cd, op)) = {
+function clause execute (ZBA_RTYPE_capmode(cs2, rs1, cd, shamt)) = {
   let rs1_val = X(rs1);
   let cs2_val = C(cs2);
-  let shamt : range(0,3) = match op {
-    SH1ADD => 1,
-    SH2ADD => 2,
-    SH3ADD => 3,
-  };
   let result = incCapAddrChecked(cs2_val, rs1_val << shamt);
   C(cd) = result;
   RETIRE_SUCCESS
