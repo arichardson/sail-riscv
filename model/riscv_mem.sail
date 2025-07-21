@@ -149,7 +149,7 @@ function pmaCheck forall 'n, 0 < 'n <= max_mem_access .
           Cache(_)        => internal_error(__FILE__, __LINE__,
                                             "Invalid CacheAccessType; Inval, Clean and Flush check Read/Write permissions."),
         };
-        let canAccess = canAccess & ext_pma_check(accTy, attributes);
+        let canAccess = platform_get_rvfi_dii() | (canAccess & ext_pma_check(accTy, attributes));
         if canAccess then None() else Some(accessFaultFromAccessType(accTy))
       }
     }
