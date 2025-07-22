@@ -923,7 +923,6 @@ bitfield Satp64 : bits(64) = {
 
 function legalize_satp64(a : Architecture, o : bits(64), v : bits(64)) -> bits(64) = {
   let s = Mk_Satp64(v);
-  let s = [s with Mode = s[Mode] & 0b1000];
   let supported : bool = match satpMode_of_bits(a, s[Mode]) {
     None()      => false,
     Some(Bare)  => true,
