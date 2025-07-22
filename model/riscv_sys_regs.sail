@@ -198,7 +198,7 @@ function clause extensionEnabled(Ext_S) = misa[S] == 0b1
 function clause extensionEnabled(Ext_H) = misa[H] == 0b1
 
 // Svnapot depends on Sv39.
-function clause extensionEnabled(Ext_Svnapot) = sys_enable_svnapot() & sys_enable_sv39()
+function clause extensionEnabled(Ext_Svnapot) = false/*sys_enable_svnapot()*/ & sys_enable_sv39()
 
 /*
  * Illegal values legalized to least privileged mode supported.
