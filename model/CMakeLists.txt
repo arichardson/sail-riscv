@@ -27,11 +27,16 @@ foreach (xlen IN ITEMS 32 64)
 
             set(sail_vlen "riscv_vlen.sail")
 
+            if (xlen EQUAL 32)
+                set(cheri_cap_impl "cheri_prelude_64.sail")
+            else()
+                set(cheri_cap_impl "cheri_prelude_128.sail")
+            endif()
+
             # Instruction sources, depending on target
             set(sail_check_srcs
                 "riscv_addr_checks_common.sail"
-                "riscv_addr_checks.sail"
-                "riscv_misa_ext.sail"
+                "cheri/cheri_addr_checks.sail"
             )
 
             set(vext_srcs
@@ -56,6 +61,7 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_mext.sail"
                 "riscv_insts_zicsr.sail"
                 "riscv_insts_hints.sail"
+                "cheri/cheri_csr_op.sail"
                 "riscv_insts_fext.sail"
                 "riscv_insts_zcf.sail"
                 "riscv_insts_dext.sail"
@@ -65,19 +71,25 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_zbb.sail"
                 "riscv_insts_zbc.sail"
                 "riscv_insts_zbs.sail"
-                "riscv_insts_zcb.sail"
-                "riscv_insts_zfh.sail"
-                # Zfa needs to be added after fext, dext and Zfh (as it needs
-                # definitions from those)
-                "riscv_insts_zfa.sail"
-                "riscv_insts_zkn.sail"
-                "riscv_insts_zks.sail"
-                "riscv_insts_zbkb.sail"
-                "riscv_insts_zbkx.sail"
-                "riscv_insts_zicond.sail"
-                ${vext_srcs}
-                "riscv_insts_zicbom.sail"
-                "riscv_insts_zicboz.sail"
+                # TODO: Add these back to the build
+                # "riscv_insts_zcb.sail"
+                # "riscv_insts_zfh.sail"
+                # # Zfa needs to be added after fext, dext and Zfh (as it needs
+                # # definitions from those)
+                # "riscv_insts_zfa.sail"
+                # "riscv_insts_zkn.sail"
+                # "riscv_insts_zks.sail"
+                # "riscv_insts_zbkb.sail"
+                # "riscv_insts_zbkx.sail"
+                # "riscv_insts_zicond.sail"
+                # ${vext_srcs}
+                # "riscv_insts_zicbom.sail"
+                # "riscv_insts_zicboz.sail"
+                "cheri/cheri_insts_begin.sail"
+                "cheri/cheri_insts.sail"
+                "cheri/cheri_insts_cext.sail"
+                "cheri/cheri_insts_zba.sail"
+                "cheri/cheri_insts_end.sail"
             )
 
             if (variant STREQUAL "rmem")
@@ -101,8 +113,10 @@ foreach (xlen IN ITEMS 32 64)
             )
 
             set(sail_sys_srcs
-                "riscv_vext_control.sail"
-                "riscv_sys_exceptions.sail"
+                # TODO: "riscv_vext_control.sail"
+                "cheri/cheri_sys_regs_access.sail"
+                "riscv_sys_regs_access_common.sail"
+                "cheri/cheri_sys_exceptions.sail"
                 "riscv_sync_exception.sail"
                 "riscv_zihpm.sail"
                 "riscv_sscofpmf.sail"
@@ -112,25 +126,37 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_fdext_regs.sail"
                 "riscv_fdext_control.sail"
                 "riscv_smcntrpmf.sail"
+                "riscv_pma.sail"
+                "riscv_svpbmt.sail"
                 "riscv_sys_control.sail"
             )
 
             set(sail_vm_srcs
+                "cheri/cheri_vmem_ptw.sail"
+                "riscv_vmem_pte_types.sail"
+                "cheri/cheri_vmem_pte_types_ext.sail"
+                "cheri/cheri_vmem_pte_validity_ext.sail"
                 "riscv_vmem_pte.sail"
-                "riscv_vmem_ptw.sail"
+                "cheri/cheri_vmem_pte_ext.sail"
                 "riscv_vmem_tlb.sail"
                 "riscv_vmem.sail"
+                "riscv_vmem_access.sail"
             )
 
             set(prelude
                 "prelude.sail"
                 "riscv_errors.sail"
+                "range_util.sail"
                 ${sail_xlen}
                 ${sail_flen}
                 ${sail_vlen}
+                "cheri/cheri_prelude.sail"
+                "cheri/cheri_types.sail"
+                "cheri/${cheri_cap_impl}"
                 "prelude_mem_addrtype.sail"
-                "prelude_mem_metadata.sail"
+                "cheri/cheri_mem_metadata.sail"
                 "prelude_mem.sail"
+                "cheri/cheri_cap_common.sail"
             )
 
             if (variant STREQUAL "rvfi")
@@ -138,31 +164,39 @@ foreach (xlen IN ITEMS 32 64)
             endif()
 
             set(sail_regs_srcs
-                "riscv_csr_begin.sail"
-                "riscv_reg_type.sail"
+                "cheri/cheri_reg_type.sail"
                 "riscv_freg_type.sail"
+                "cheri/cheri_vmem_types.sail"
                 "riscv_regs.sail"
-                "riscv_pc_access.sail"
+                "riscv_sstc.sail"
+                "cheri/cheri_sys_regs_types.sail"
+                "cheri/cheri_sys_regs_envcfg.sail"
+                "cheri/cheri_sys_regs_seccfg.sail"
+                "cheri/cheri_sys_regs_xstatus.sail"
                 "riscv_sys_regs.sail"
                 "riscv_pmp_regs.sail"
                 "riscv_pmp_control.sail"
-                "riscv_ext_regs.sail"
-                ${sail_check_srcs}
+                "cheri/cheri_sys_regs.sail"
+                "cheri/cheri_regs.sail"
+                "cheri/cheri_pc_access.sail"
                 "riscv_vreg_type.sail"
                 "riscv_vext_regs.sail"
             )
 
             set(sail_arch_srcs
                 ${prelude}
-                "riscv_extensions.sail"
                 "riscv_types_common.sail"
-                "riscv_types_ext.sail"
+                "cheri/cheri_riscv_types.sail"
+                "riscv_extensions.sail"
                 "riscv_types.sail"
-                "riscv_vmem_types.sail"
+                "riscv_csr_begin.sail"
+                "riscv_convert_invalid_addr.sail"
                 ${sail_regs_srcs}
                 ${sail_sys_srcs}
                 "riscv_platform.sail"
+                ${sail_check_srcs}
                 "riscv_mem.sail"
+                "cheri/cheri_mem.sail"
                 ${sail_vm_srcs}
                 # Shared/common code for the cryptography extension.
                 "riscv_types_kext.sail"
@@ -172,14 +206,14 @@ foreach (xlen IN ITEMS 32 64)
                 set(riscv_step_ext "riscv_step_rvfi.sail")
                 set(riscv_fetch "riscv_fetch_rvfi.sail")
             else()
-                set(riscv_step_ext "riscv_step_ext.sail")
+                set(riscv_step_ext "cheri/cheri_step_ext.sail")
                 set(riscv_fetch "riscv_fetch.sail")
             endif()
 
             set(sail_step_srcs
                 "riscv_step_common.sail"
                 ${riscv_step_ext}
-                "riscv_decode_ext.sail"
+                "cheri/cheri_decode_ext.sail"
                 ${riscv_fetch}
                 "riscv_step.sail"
             )
