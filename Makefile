@@ -29,16 +29,18 @@ SAIL_CHECK_SRCS = $(SAIL_RISCV_MODEL_DIR)/riscv_addr_checks_common.sail \
                   $(SAIL_CHERI_MODEL_DIR)/cheri_addr_checks.sail
 
 SAIL_DEFAULT_INST = $(SAIL_RISCV_MODEL_DIR)/riscv_insts_base.sail \
+                    $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zifencei.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_aext.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zca.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_mext.sail \
-                    $(SAIL_RISCV_MODEL_DIR)/riscv_insts_hints.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zicsr.sail \
+                    $(SAIL_RISCV_MODEL_DIR)/riscv_insts_hints.sail \
                     ${SAIL_CHERI_MODEL_DIR}/cheri_csr_op.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_fext.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zcf.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_dext.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zcd.sail \
+                    $(SAIL_RISCV_MODEL_DIR)/riscv_insts_svinval.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zba.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zbb.sail \
                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zbc.sail \
@@ -62,13 +64,13 @@ SAIL_SYS_SRCS += ${SAIL_RISCV_MODEL_DIR}/riscv_sys_regs_access_common.sail
 SAIL_SYS_SRCS += $(SAIL_CHERI_MODEL_DIR)/cheri_sys_exceptions.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_sync_exception.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_zihpm.sail
-SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_smcntrpmf.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_sscofpmf.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_zkr_control.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_zicntr_control.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_softfloat_interface.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_fdext_regs.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_fdext_control.sail
+SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_smcntrpmf.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_pma.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_svpbmt.sail
 SAIL_SYS_SRCS += $(SAIL_RISCV_MODEL_DIR)/riscv_sys_control.sail
@@ -130,7 +132,8 @@ SAIL_ARCH_SRCS = $(PRELUDE) \
                  $(SAIL_CHECK_SRCS) \
                  $(SAIL_RISCV_MODEL_DIR)/riscv_mem.sail \
                  $(SAIL_CHERI_MODEL_DIR)/cheri_mem.sail \
-                 $(SAIL_VM_SRCS)
+                 $(SAIL_VM_SRCS) \
+                 $(SAIL_RISCV_MODEL_DIR)/riscv_types_kext.sail
 
 SAIL_ARCH_RVFI_SRCS = \
                  $(PRELUDE) \

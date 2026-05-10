@@ -10,6 +10,7 @@ set(EMULATOR_COMMON_SRCS
     riscv_sim.cpp
     riscv_softfloat.c
     riscv_softfloat.h
+    "../handwritten_support/c_emulator_fix.c"
 )
 
 foreach (xlen IN ITEMS 32 64)
