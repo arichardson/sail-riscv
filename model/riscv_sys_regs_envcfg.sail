@@ -1,9 +1,5 @@
 // TODO: factor out code common to legalize_menvcfg and legalize_senvcfg.
 
-/* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
-   supervisor mode is implemented and non-bare addressing modes are supported. */
-val sys_enable_writable_fiom = pure "sys_enable_writable_fiom" : unit -> bool
-
 // Is PBMT supported?
 val sys_enable_pbmt = pure "sys_enable_pbmt" : unit -> bool
 

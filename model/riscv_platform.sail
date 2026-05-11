@@ -27,8 +27,11 @@ val elf_entry = pure {
 // Cache block size is 2^cache_block_size_exp. Max is `max_mem_access` (4096)
 // because this model performs `cbo.zero` with a single write, and the behaviour
 // with cache blocks larger than a page is not clearly defined.
-val plat_cache_block_size_exp = pure {c: "plat_cache_block_size_exp", interpreter: "Platform.cache_block_size_exp", lem: "plat_cache_block_size_exp"} : unit -> range(0, 12)
+function plat_cache_block_size_exp() -> range(0, 12) = config platform.cache_block_size_exp
 
+/* Main memory */
+function plat_ram_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.ram.base : int)
+function plat_ram_size() -> physaddrbits = to_bits(physaddrbits_len, config platform.ram.size : int)
 /* PMA loading */
 
 // Restrict indexes to a reasonable range so they use mach_bits instead of GMP.
@@ -111,39 +114,58 @@ function init_pma_regions() = {
 }
 
 /* whether the MMU should update dirty bits in PTEs */
-val plat_enable_dirty_update = pure {interpreter: "Platform.enable_dirty_update",
-                                     c: "plat_enable_dirty_update",
-                                     lem: "plat_enable_dirty_update"} : unit -> bool
+function plat_enable_dirty_update() -> bool = config memory.translation.dirty_update
 
 /* whether the platform supports misaligned accesses without trapping to M-mode. if false,
  * misaligned loads/stores are trapped to Machine mode.
  */
-val plat_enable_misaligned_access = pure {interpreter: "Platform.enable_misaligned_access",
-                                          c: "plat_enable_misaligned_access",
-                                          lem: "plat_enable_misaligned_access"} : unit -> bool
+function plat_enable_misaligned_access() -> bool = config memory.misaligned.enabled
 
 /* whether mtval stores the bits of a faulting instruction on illegal instruction exceptions */
-val plat_mtval_has_illegal_inst_bits = pure {interpreter: "Platform.mtval_has_illegal_inst_bits",
-                                             c: "plat_mtval_has_illegal_inst_bits",
-                                             lem: "plat_mtval_has_illegal_inst_bits"} : unit -> bool
+function plat_mtval_has_illegal_inst_bits() -> bool = config base.mtval_has_illegal_instruction_bits
 
 /* ROM holding reset vector and device-tree DTB */
-val plat_rom_base   = pure {interpreter: "Platform.rom_base", c: "plat_rom_base", lem: "plat_rom_base"} : unit -> physaddrbits
-val plat_rom_size   = pure {interpreter: "Platform.rom_size", c: "plat_rom_size", lem: "plat_rom_size"} : unit -> physaddrbits
+function plat_rom_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.rom.base : int)
+function plat_rom_size() -> physaddrbits = to_bits(physaddrbits_len, config platform.rom.size : int)
 
 /* Location of clock-interface, which should match with the spec in the DTB */
-val plat_clint_base = pure {interpreter: "Platform.clint_base", c: "plat_clint_base", lem: "plat_clint_base"} : unit -> physaddrbits
-val plat_clint_size = pure {interpreter: "Platform.clint_size", c: "plat_clint_size", lem: "plat_clint_size"} : unit -> physaddrbits
+function plat_clint_base() -> physaddrbits = to_bits(physaddrbits_len, config platform.clint.base : int)
+function plat_clint_size() -> physaddrbits = to_bits(physaddrbits_len, config platform.clint.size : int)
 
 /* Location of HTIF ports */
 val plat_htif_tohost = pure {c: "plat_htif_tohost", lem: "plat_htif_tohost"} : unit -> physaddrbits
 function plat_htif_tohost () = to_bits(physaddrbits_len, elf_tohost ())
 // todo: fromhost
 
-/* Location of clic memory mapped registers */
-val plat_clic_base = pure {interpreter: "Platform.clic_base", c: "plat_clic_base", lem: "plat_clic_base"} : unit -> physaddrbits
-val plat_clic_size = pure {interpreter: "Platform.clic_size", c: "plat_clic_size", lem: "plat_clic_size"} : unit -> physaddrbits
-val plat_clic_disable_mmio = pure {interpreter: "Platform.plat_clic_disable_mmio", c: "plat_clic_disable_mmio", lem: "plat_clic_disable_mmio"} : unit -> bool
+/* Physical memory map predicates */
+
+function within_phys_mem forall 'n, 'n <= max_mem_access. (physaddr(addr) : physaddr, width : int('n)) -> bool = {
+  /* To avoid overflow issues when physical memory extends to the end
+   * of the addressable range, we need to perform address bound checks
+   * on unsigned unbounded integers.
+   */
+  let addr_int     = unsigned(addr);
+  let ram_base_int = unsigned(plat_ram_base ());
+  let rom_base_int = unsigned(plat_rom_base ());
+  let ram_size_int = unsigned(plat_ram_size ());
+  let rom_size_int = unsigned(plat_rom_size ());
+
+  /* todo: iterate over segment list */
+  if      (  ram_base_int <= addr_int
+           & (addr_int + sizeof('n)) <= (ram_base_int + ram_size_int))
+  then    true
+  else if (  rom_base_int <= addr_int
+           & (addr_int + sizeof('n)) <= (rom_base_int + rom_size_int))
+  then    true
+  else {
+    print_platform("within_phys_mem: " ^ BitStr(addr) ^ " not within phys-mem:");
+    print_platform("  plat_rom_base: " ^ BitStr(plat_rom_base ()));
+    print_platform("  plat_rom_size: " ^ BitStr(plat_rom_size ()));
+    print_platform("  plat_ram_base: " ^ BitStr(plat_ram_base ()));
+    print_platform("  plat_ram_size: " ^ BitStr(plat_ram_size ()));
+    false
+  }
+}
 
 function within_clint forall 'n, 0 < 'n <= max_mem_access . (physaddr(addr) : physaddr, width : int('n)) -> bool = {
   /* To avoid overflow issues when physical memory extends to the end
@@ -165,7 +187,7 @@ function within_htif_readable forall 'n, 0 < 'n <= max_mem_access . (physaddr(ad
 
 /* CLINT (Core Local Interruptor), based on Spike. */
 
-val plat_insns_per_tick = pure {interpreter: "Platform.insns_per_tick", c: "plat_insns_per_tick", lem: "plat_insns_per_tick"} : unit -> int
+function plat_insns_per_tick() -> int = config platform.instructions_per_tick
 
 // Each hart has a memory-mapped mtimecmp register. Typically these are
 // exposed as an array in CLINT. The CLINT implementation here is currently
@@ -173,7 +195,7 @@ val plat_insns_per_tick = pure {interpreter: "Platform.insns_per_tick", c: "plat
 register mtimecmp : bits(64)
 
 // Unlike mtimecmp, stimecmp is a real CSR; not memory mapped.
-// register stimecmp : bits(64)
+register stimecmp : bits(64)
 
 /* CLINT memory-mapped IO */
 

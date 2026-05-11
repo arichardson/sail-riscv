@@ -95,20 +95,27 @@ register misa : Misa =
   ]
 
 /* whether misa is R/W */
-val sys_enable_writable_misa = pure "sys_enable_writable_misa" : unit -> bool
+function sys_enable_writable_misa() -> bool = config base.writable_misa
+
 /* whether misa.c was enabled at boot */
-val sys_enable_rvc = pure "sys_enable_rvc" : unit -> bool
+function sys_enable_rvc() -> bool = config extensions.C.enabled
+
 /* whether misa.{f,d} were enabled at boot */
-val sys_enable_fdext = pure "sys_enable_fdext" : unit -> bool
+function sys_enable_fdext() -> bool = config extensions.FD.enabled
+
 /* whether Svinval was enabled at boot */
-val sys_enable_svinval = pure "sys_enable_svinval" : unit -> bool
+function sys_enable_svinval() -> bool = config extensions.Svinval.enabled
+
 /* whether Zcb was enabled at boot */
-val sys_enable_zcb = pure "sys_enable_zcb" : unit -> bool
+function sys_enable_zcb() -> bool = config extensions.Zcb.enabled
+
 /* whether zfinx was enabled at boot */
-val sys_enable_zfinx = pure "sys_enable_zfinx" : unit -> bool
-/* whether Zfh/Zfhmin was enabled at boot */
-val sys_enable_zfh = pure "sys_enable_zfh" : unit -> bool
-val sys_enable_zfhmin = pure "sys_enable_zfhmin" : unit -> bool
+function sys_enable_zfinx() -> bool = config extensions.Zfinx.enabled
+
+/* Whether FIOM bit of menvcfg/senvcfg is enabled. It must be enabled if
+   supervisor mode is implemented and non-bare addressing modes are supported. */
+function sys_enable_writable_fiom() -> bool = config base.writable_fiom
+
 /* whether misa.X should be set to indicate non-standard extensions */
 val sys_misa_x = pure "sys_misa_x" : unit -> bool
 
@@ -122,15 +129,17 @@ val sys_xtvec_writable_bits = pure "sys_xtvec_writable_bits" : unit -> bits(64)
 val sys_xcause_bits = pure "sys_xcause_bits" : unit -> range(0, 64)
 
 /* How many PMP entries are implemented. This must be 0, 16 or 64 (this is checked at runtime). */
-val sys_pmp_count = pure "sys_pmp_count" : unit -> range(0, 64)
+function sys_pmp_count() -> {0, 16, 64} = config memory.pmp.count
+
 /* Which PMP entries are writable. This is a bitmask. 1 means writable, 0 means read-only zero. */
 val sys_pmp_writable = pure "sys_pmp_writable" : unit -> bits(64)
+
 /* G parameter that specifies the PMP grain size. The grain size is 2^(G+2), e.g.
    G=0 -> 4 bytes, G=10 -> 4096 bytes. */
-val sys_pmp_grain = pure "sys_pmp_grain" : unit -> range(0, 63)
+function sys_pmp_grain() -> range(0, 63) = config memory.pmp.grain
 
 /* Which HPM counters are supported (as a bit mask). Bits [2 .. 0] are ignored. */
-val sys_writable_hpm_counters = pure "sys_writable_hpm_counters" : unit -> bits(32)
+function sys_writable_hpm_counters() -> bits(32) = config base.writable_hpm_counters
 
 // Physical address size. This must be at least 12 so you can address one page.
 // The minimum of 13 is due to https://github.com/rems-project/sail/issues/471
@@ -151,26 +160,26 @@ val sys_enable_tlb = pure "sys_enable_tlb" : unit -> bool
 val sys_enable_svnapot = pure "sys_enable_svnapot" : unit -> bool
 
 /* whether misa.v was enabled at boot */
-val sys_enable_vext = pure "sys_enable_vext" : unit -> bool
+function sys_enable_vext() -> bool = config extensions.V.enabled
 
 /* whether misa.b was enabled at boot */
-val sys_enable_bext = pure "sys_enable_bext" : unit -> bool
+function sys_enable_bext() -> bool = config extensions.B.enabled
 
 // CBO extensions. Zicbop cannot be enabled/disabled because it has no effect
 // at all on this model.
-val sys_enable_zicbom = pure "sys_enable_zicbom" : unit -> bool
-val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
+function sys_enable_zicbom() -> bool = config extensions.Zicbom.enabled
+function sys_enable_zicboz() -> bool = config extensions.Zicboz.enabled
 
 // maskmax6 value for Sdtrig
 val sys_maskmax6 = pure "sys_maskmax6" : unit -> range(0, 63)
 
 // Is the Zvkb extension supported.
-val sys_enable_zvkb = pure "sys_enable_zvkb" : unit -> bool
+function sys_enable_zvkb() -> bool = config extensions.Zvkb.enabled
 
 // Is the Zvbc extension supported.
 function sys_enable_zvbc() -> bool = true
 // Is the Sstc stimecmp extension supported.
-val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
+function sys_enable_sstc() -> bool = config extensions.Sstc.enabled
 
 // Supervisor timecmp
 function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
@@ -230,18 +239,6 @@ function have_privLevel(priv : priv_level) -> bool =
     0b10 => false,
     0b11 => true,
   }
-
-register mstatus : Mstatus = {
-  // Initialise SXL and UXL.
-  let mxl = architecture(if xlen == 32 then RV32 else RV64);
-  [ Mk_Mstatus(zeros()) with
-    // These fields do not exist on RV32 and are read-only zero
-    // if the corresponding mode is not supported.
-    SXL = if xlen != 32 & sys_enable_supervisor() then mxl else zeros(),
-    UXL = if xlen != 32 & sys_enable_user() then mxl else zeros(),
-  ]
-}
-
 
 function effectivePrivilege(t : AccessType(ext_access_type), m : Mstatus, priv : Privilege) -> Privilege =
   if   t != Execute() & m[MPRV] == 0b1
@@ -323,6 +320,17 @@ function legalize_mstatus(o : Mstatus, v : bits(64)) -> Mstatus = {
   let o = [o with SD = bool_to_bits(dirty)];
 
   ext_legalize_mstatus(o, v)
+}
+
+register mstatus : Mstatus = {
+  // Initialise SXL and UXL.
+  let mxl = architecture(if xlen == 32 then RV32 else RV64);
+  [ Mk_Mstatus(zeros()) with
+    // These fields do not exist on RV32 and are read-only zero
+    // if the corresponding mode is not supported.
+    SXL = if xlen != 32 & sys_enable_supervisor() then mxl else zeros(),
+    UXL = if xlen != 32 & sys_enable_user() then mxl else zeros(),
+  ]
 }
 
 mapping clause csr_name_map = 0x300  <-> "mstatus"

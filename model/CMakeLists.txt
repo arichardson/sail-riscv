@@ -172,7 +172,6 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_freg_type.sail"
                 "cheri/cheri_vmem_types.sail"
                 "riscv_regs.sail"
-                "riscv_sstc.sail"
                 "cheri/cheri_sys_regs_types.sail"
                 "cheri/cheri_sys_regs_envcfg.sail"
                 "cheri/cheri_sys_regs_seccfg.sail"
@@ -198,6 +197,7 @@ foreach (xlen IN ITEMS 32 64)
                 ${sail_regs_srcs}
                 ${sail_sys_srcs}
                 "riscv_platform.sail"
+                "riscv_sstc.sail"
                 ${sail_check_srcs}
                 "riscv_mem.sail"
                 "cheri/cheri_mem.sail"
@@ -365,6 +365,7 @@ foreach (xlen IN ITEMS 32 64)
                         -o "${CMAKE_CURRENT_BINARY_DIR}/model"
                         # Minimum required Sail compiler version.
                         --require-version ${SAIL_REQUIRED_VER}
+                        --config ${CMAKE_SOURCE_DIR}/config/default.json
                         # Input files.
                         ${sail_srcs}
                     COMMAND ${CMAKE_COMMAND} -E touch ${smt_stamp_file}
