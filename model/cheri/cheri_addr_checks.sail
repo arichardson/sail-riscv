@@ -217,7 +217,7 @@ enum ext_csr_exc_type = {
   IllegalInstruction,
 }
 
-function ext_check_CSR (csrno : bits(12), p : Privilege, isWrite : bool, op : csrop, is_imm : bool) -> option(ext_csr_exc_type) =
+function ext_check_CSR (csrno : bits(12), p : Privilege, isWrite : bool, op : csrop) -> option(ext_csr_exc_type) =
   if not(pcc_access_system_regs()) & requires_ASR_perm(csrno, isWrite) then Some(CHERIPermExc)
   else None()
 
