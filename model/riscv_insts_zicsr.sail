@@ -79,7 +79,7 @@ function clause execute CSRReg(csr, rs1, rd, op) =
   doCSR(csr, rs1, rd, op, (op == CSRRW) | (rs1 != zreg), false)
 
 function clause execute CSRImm(csr, imm, rd, op) =
-  doCSR(csr, Regidx(imm), rd, op, (op == CSRRW) | (imm != zeros_implicit()), true)
+  doCSR(csr, Regidx(imm), rd, op, (op == CSRRW) | (imm != zeros()), true)
 
 mapping csr_mnemonic : csrop <-> string = {
   CSRRW <-> "csrrw",
