@@ -9,7 +9,8 @@
 /* ****************************************************************** */
 /* This file specifies the instructions in the 'Zicsr' extension.     */
 /* ****************************************************************** */
-union clause ast = CSR  : (csreg, regidx, regidx, bool, csrop)
+union clause ast = CSRReg  : (csreg, regidx, regidx, csrop)
+union clause ast = CSRImm  : (csreg, bits(5), regidx, csrop)
 
 mapping encdec_csrop : csrop <-> bits(2) = {
   CSRRW <-> 0b01,
@@ -17,8 +18,11 @@ mapping encdec_csrop : csrop <-> bits(2) = {
   CSRRC <-> 0b11
 }
 
-mapping clause encdec = CSR(csr, rs1, rd, is_imm, op)
-  <-> csr @ encdec_reg(rs1) @ bool_bits(is_imm) @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
+mapping clause encdec = CSRReg(csr, rs1, rd, op)
+  <-> csr @ encdec_reg(rs1) @ 0b0 @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
+
+mapping clause encdec = CSRImm(csr, imm, rd, op)
+  <-> csr @ imm @ 0b1 @ encdec_csrop(op) @ encdec_reg(rd) @ 0b1110011
 
 val handle_csr_op : (
   csreg,
@@ -30,20 +34,15 @@ val handle_csr_op : (
   bool,
 ) -> Retired
 
-function clause execute CSR(csr, rs1, rd, is_imm, op) = {
-  // CSRRW[I] always writes. CSRRS[I] and CSRRC[I] write if the
-  // source register (or immediate) is not x0 (or 0).
-  let isWrite = op == CSRRW | regidx_bits(rs1) != zeros();
-  // CSRRS[I] and CSRRC[I] always read. CSRRW[I] reads if the destination
-  // register is not x0.
-  let isRead = op != CSRRW | regidx_bits(rd) != zeros();
-
-  if not(check_CSR(csr, cur_privilege(), isWrite))
+function doCSR(csr : csreg, rs1 : regidx, rd : regidx, op : csrop, is_CSR_Write: bool, is_imm: bool) -> Retired = {
+  if not(check_CSR(csr, cur_privilege(), is_CSR_Write))
   then { handle_illegal(); RETIRE_FAIL }
   else {
-    match ext_check_CSR(csr, cur_privilege(), isWrite, op, is_imm) {
+    /* CSRRW should not generate read side-effects if rd == 0 */
+    let is_CSR_Read = not(op == CSRRW & rd == zreg);
+    match ext_check_CSR(csr, cur_privilege(), is_CSR_Write, op) {
       Some(err) => {ext_check_CSR_fail(err); RETIRE_FAIL},
-      None() => handle_csr_op(csr, rs1, rd, is_imm, op, isWrite, isRead),
+      None() => handle_csr_op(csr, rs1, rd, is_imm, op, is_CSR_Write, is_CSR_Read),
     }
   }
 }
@@ -54,24 +53,33 @@ function default_handle_csr_op(
   rd : regidx,
   is_imm : bool,
   op : csrop,
-  isWrite : bool,
-  isRead : bool,
+  is_CSR_Write : bool,
+  is_CSR_Read : bool,
 ) -> Retired = {
-  let is_CSRRW_write = isWrite & (op == CSRRW) & not(is_imm);
-  let write_val : xlenbits = if is_imm then zero_extend(regidx_bits(rs1)) else X(rs1);
-  // Reading CSRs can have side effects and is not done in certain cases.
-  let csr_val = if isRead then read_CSR(csr, write_val) else zeros();
-  if isWrite then {
+  let rs1_val : xlenbits = if is_imm then zero_extend(regidx_bits(rs1)) else X(rs1);
+  let csr_val : xlenbits = if is_CSR_Read then read_CSR(csr, rs1_val) else zeros();
+  if is_CSR_Write then {
     let new_val : xlenbits = match op {
-      CSRRW => write_val,
-      CSRRS => csr_val | write_val,
-      CSRRC => csr_val & ~(write_val)
+      CSRRW => rs1_val,
+      CSRRS => csr_val | rs1_val,
+      CSRRC => csr_val & ~(rs1_val)
     };
-    let _ = write_CSR(csr, new_val);
+    let final_val = write_CSR(csr, new_val);
+    if get_config_print_reg()
+    then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ bits_str(final_val) ^ " (input: " ^ bits_str(new_val) ^ ")")
+  } else {
+    if get_config_print_reg()
+    then print_reg("CSR " ^ to_str(csr) ^ " -> " ^ bits_str(csr_val));
   };
   X(rd) = csr_val;
   RETIRE_SUCCESS
 }
+
+function clause execute CSRReg(csr, rs1, rd, op) =
+  doCSR(csr, rs1, rd, op, (op == CSRRW) | (rs1 != zreg), false)
+
+function clause execute CSRImm(csr, imm, rd, op) =
+  doCSR(csr, Regidx(imm), rd, op, (op == CSRRW) | (imm != zeros_implicit()), true)
 
 mapping csr_mnemonic : csrop <-> string = {
   CSRRW <-> "csrrw",
@@ -79,7 +87,7 @@ mapping csr_mnemonic : csrop <-> string = {
   CSRRC <-> "csrrc"
 }
 
-mapping clause assembly = CSR(csr, Regidx(rs1_bits), rd, true, op)
-  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(rs1_bits)
-mapping clause assembly = CSR(csr, rs1, rd, false, op)
+mapping clause assembly = CSRImm(csr, imm, rd, op)
+  <-> csr_mnemonic(op) ^ "i" ^ spc() ^ reg_name(rd)  ^ sep() ^ csr_name_map(csr) ^ sep() ^ hex_bits_5(imm)
+mapping clause assembly = CSRReg(csr, rs1, rd, op)
   <-> csr_mnemonic(op) ^ spc() ^ reg_name(rd) ^ sep() ^ csr_name_map(csr) ^ sep() ^ reg_name(rs1)
