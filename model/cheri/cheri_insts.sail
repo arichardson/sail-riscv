@@ -44,13 +44,13 @@ function clause execute(JAL_capmode(imm, cd)) = {
   let off : xlenbits = sign_extend(imm);
   let newPC = PC + off;
   if not(validAddr(newPC) | capBoundsInfinite(PCC)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, virtaddr(zeros()));
+    handle_cheri_exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, Virtaddr(zeros()));
     RETIRE_FAIL
   } else if not(inCapBounds(PCC, newPC, min_instruction_bytes())) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, virtaddr(zeros()));
+    handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros()));
     RETIRE_FAIL
   } else if newPC[1] == bitone & not(extensionEnabled(Ext_Zca)) then {
-    handle_mem_exception(virtaddr(newPC), E_Fetch_Addr_Align());
+    handle_mem_exception(Virtaddr(newPC), E_Fetch_Addr_Align());
     RETIRE_FAIL
   } else {
     let (success, linkCap) = setCapAddr(PCC, nextPC); /* Note that nextPC accounts for compressed instructions */
@@ -85,22 +85,22 @@ function clause execute(JALR_capmode(imm, cs1, cd)) = {
   let newPC = [cs1_val.address + off with 0 = bitzero]; /* clear bit zero as for RISCV JALR */
 
   if not(capTaggedAndReservedValid(cs1_val)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_TagViolation, virtaddr(zeros()));
+    handle_cheri_exception(CapCheckType_JBr, CapEx_TagViolation, Virtaddr(zeros()));
     RETIRE_FAIL
   } else if capIsSealed(cs1_val) & imm != zeros() then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_SealViolation, virtaddr(zeros()));
+    handle_cheri_exception(CapCheckType_JBr, CapEx_SealViolation, Virtaddr(zeros()));
     RETIRE_FAIL
   } else if not(canX(cs1_val)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_PermissionViolation, virtaddr(zeros()));
+    handle_cheri_exception(CapCheckType_JBr, CapEx_PermissionViolation, Virtaddr(zeros()));
     RETIRE_FAIL
   } else if not(validAddr(newPC) | capBoundsInfinite(cs1_val)) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, virtaddr(zeros()));
+    handle_cheri_exception(CapCheckType_JBr, CapEx_InvalidAddressViolation, Virtaddr(zeros()));
     RETIRE_FAIL
   } else if not(inCapBounds(cs1_val, newPC, min_instruction_bytes())) then {
-    handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, virtaddr(zeros()));
+    handle_cheri_exception(CapCheckType_JBr, CapEx_LengthViolation, Virtaddr(zeros()));
     RETIRE_FAIL
   } else if newPC[1] == bitone & not(extensionEnabled(Ext_Zca)) then {
-    handle_mem_exception(virtaddr(newPC), E_Fetch_Addr_Align());
+    handle_mem_exception(Virtaddr(newPC), E_Fetch_Addr_Align());
     RETIRE_FAIL
   } else {
     let (success, linkCap) = setCapAddr(PCC, nextPC); /* Note that nextPC accounts for compressed instructions */
@@ -638,7 +638,7 @@ function clause execute (SENTRY(cd, cs1)) = {
 
 enum CapAccessType = { Cap_Read, Cap_Write, Cap_ReadWrite }
 
-function cap_mem_access_exception(auth_val : Capability, virtaddr(vaddr) : virtaddr, acc_type : CapAccessType) -> option(CapEx) = {
+function cap_mem_access_exception(auth_val : Capability, Virtaddr(vaddr) : virtaddr, acc_type : CapAccessType) -> option(CapEx) = {
   if not(capTaggedAndReservedValid(auth_val)) then {
     Some(CapEx_TagViolation)
   } else if capIsSealed(auth_val) then {

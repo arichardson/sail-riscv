@@ -318,7 +318,7 @@ function handle_mem_exception(Virtaddr(addr) : virtaddr, e : ExceptionType) -> u
 
 // Handle a fault during address translation. For the base model this is identical
 // to handle_mem_exception() but for CHERI it also sets mtval2 based on ext_ptw.
-function handle_translate_exception(virtaddr(addr) : virtaddr, e : ExceptionType, ext_ptw : ext_ptw) -> unit = {
+function handle_translate_exception(Virtaddr(addr) : virtaddr, e : ExceptionType, ext_ptw : ext_ptw) -> unit = {
   let addr = convertInvalidAddr(addr);
   let t : sync_exception = struct { trap    = e,
                                     excinfo = Some(addr),

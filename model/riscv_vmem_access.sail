@@ -49,7 +49,7 @@ function translateRange(
   // If the second access exists then we need to translate its address.
   let tr1 = if width1 != 0 then {
     // Second address to translate is at the start of the next page (wrapped).
-    let vaddr1 = virtaddr(virtaddr_bits(vaddr) + width0);
+    let vaddr1 = Virtaddr(virtaddr_bits(vaddr) + width0);
     let tr1 : translation = match translateAddr(vaddr1, typ) {
       TR_Address(paddr, pbmt, ext_ptw) => (paddr, pbmt, ext_ptw),
       TR_Failure(exc, ext_ptw) => return Err(vaddr1, exc, ext_ptw),
@@ -98,7 +98,7 @@ function vmem_read_priv_meta forall 'n, 0 < 'n < max_mem_access . (
           };
           let (val1, meta1) : (bits(8 * 'w1), mem_meta) = match checked_mem_read(typ, priv, pbmt1, paddr1, width1, aq, rel, res, meta) {
             Ok(v, meta) => (v, meta),
-            Err(e) => return Err(virtaddr(virtaddr_bits(vaddr) + width0), e, ext_ptw1),
+            Err(e) => return Err(Virtaddr(virtaddr_bits(vaddr) + width0), e, ext_ptw1),
           };
           // TODO: How should we combine meta0 and meta1?
           Ok((val1 @ val0, meta0))
@@ -146,7 +146,7 @@ function vmem_write_translate forall 'n, 0 < 'n <= max_mem_access . (
           };
           match mem_write_ea(paddr1, width1, aq, rl, con) {
             Ok() => (),
-            Err(e) => return Err(virtaddr(virtaddr_bits(vaddr) + width0), e, ext_ptw1),
+            Err(e) => return Err(Virtaddr(virtaddr_bits(vaddr) + width0), e, ext_ptw1),
           };
           Ok(struct { vaddr, tr, width, typ, aq, rl, con })
         },

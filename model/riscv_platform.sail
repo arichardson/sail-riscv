@@ -105,7 +105,7 @@ function init_pma_regions() = {
     assert(not(attr.misalignmentCausesAccessFault & attr.misalignmentCausesAlignmentFault));
 
     let region : PMA_Region = struct {
-      base       = physaddr(plat_pma_address(i)),
+      base       = Physaddr(plat_pma_address(i)),
       size       = plat_pma_size(i),
       attributes = attr,
     };

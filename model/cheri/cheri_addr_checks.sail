@@ -20,7 +20,7 @@ function effective_cheri_mode() = {
 function handle_cheri_exception(
   capCheckType   : CapCheckType,
   capEx          : CapEx,
-  virtaddr(addr) : virtaddr,
+  Virtaddr(addr) : virtaddr,
 ) -> unit = {
   if get_config_print_platform()
   then print_platform("CHERI " ^ capchecktype_name(capCheckType) ^
@@ -45,7 +45,7 @@ function pcc_access_system_regs () = canASR(PCC)
 /* CHERI fetch address checks */
 
 function cheri_fetch_addr_check(start_addr : xlenbits, addr : xlenbits, auth_cap : Capability, len : CapLenInt) -> Ext_FetchAddr_Check(ext_fetch_addr_error) = {
-  if debug_mode_active then Ext_FetchAddr_OK(virtaddr(addr))
+  if debug_mode_active then Ext_FetchAddr_OK(Virtaddr(addr))
   else if start_addr == addr
   then {
     /* We need to perform the permission checks only for the first granule. */
@@ -59,7 +59,7 @@ function cheri_fetch_addr_check(start_addr : xlenbits, addr : xlenbits, auth_cap
     then    Ext_FetchAddr_Ext_Error(CapEx_InvalidAddressViolation)
     else if not(inCapBounds(auth_cap, addr, len))
     then    Ext_FetchAddr_Ext_Error(CapEx_LengthViolation)
-    else    Ext_FetchAddr_OK(virtaddr(addr))
+    else    Ext_FetchAddr_OK(Virtaddr(addr))
   } else {
     /* Perform only the valid address and bounds checks on the current granule, i.e. addr. */
     // For the second granule (the upper 2 bytes), check the *end* of the
@@ -69,7 +69,7 @@ function cheri_fetch_addr_check(start_addr : xlenbits, addr : xlenbits, auth_cap
     then    Ext_FetchAddr_Ext_Error(CapEx_InvalidAddressViolation)
     else if not(inCapBounds(auth_cap, addr, len))
     then    Ext_FetchAddr_Ext_Error(CapEx_LengthViolation)
-    else    Ext_FetchAddr_OK(virtaddr(addr))
+    else    Ext_FetchAddr_OK(Virtaddr(addr))
   }
 }
 
@@ -78,7 +78,7 @@ function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr
 
 function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit = {
   let capEx = err;
-  handle_cheri_exception(CapCheckType_Inst, capEx, virtaddr(zeros()))
+  handle_cheri_exception(CapCheckType_Inst, capEx, Virtaddr(zeros()))
 }
 
 /* CHERI control address checks */
@@ -93,7 +93,7 @@ function ext_control_check_addr(pc : xlenbits) -> Ext_ControlAddr_Check(ext_cont
   then    Ext_ControlAddr_Error(CapEx_InvalidAddressViolation)
   else if not(inCapBounds(PCC, target, min_instruction_bytes ()))
   then    Ext_ControlAddr_Error(CapEx_LengthViolation)
-  else    Ext_ControlAddr_OK(virtaddr(target))
+  else    Ext_ControlAddr_OK(Virtaddr(target))
 }
 
 /* the control address is derived from the PC register, e.g. in JAL */
@@ -102,12 +102,12 @@ function ext_control_check_pc(pc : xlenbits) -> Ext_ControlAddr_Check(ext_contro
   then    Ext_ControlAddr_Error(CapEx_InvalidAddressViolation)
   else if not(inCapBounds(PCC, pc, min_instruction_bytes ()))
   then    Ext_ControlAddr_Error(CapEx_LengthViolation)
-  else    Ext_ControlAddr_OK(virtaddr(pc))
+  else    Ext_ControlAddr_OK(Virtaddr(pc))
 }
 
 function ext_handle_control_check_error(err : ext_control_addr_error) -> unit = {
   let capEx = err;
-  handle_cheri_exception(CapCheckType_JBr, capEx, virtaddr(zeros()))
+  handle_cheri_exception(CapCheckType_JBr, capEx, Virtaddr(zeros()))
 }
 
 /* CHERI data address checks */
@@ -126,8 +126,8 @@ type ext_data_addr_error = ExtDataErr
 val get_cheri_mode_cap_addr : (regidx, xlenbits) -> (Capability, virtaddr)
 function get_cheri_mode_cap_addr (base_reg : regidx, offset : xlenbits) =
   match effective_cheri_mode() {
-    CapPtrMode => (C(base_reg), virtaddr(C(base_reg).address + offset)),
-    IntPtrMode => (ddc, virtaddr(X(base_reg) + offset)),
+    CapPtrMode => (C(base_reg), Virtaddr(C(base_reg).address + offset)),
+    IntPtrMode => (ddc, Virtaddr(X(base_reg) + offset)),
   }
 
 function ext_data_get_addr(base_reg : regidx, offset : xlenbits, acc : AccessType(ext_access_type), width : range(0, max_mem_access))
@@ -177,8 +177,8 @@ function ext_data_get_addr(base_reg : regidx, offset : xlenbits, acc : AccessTyp
     None();
 
   match error {
-    Some(cause) => Ext_DataAddr_Error(struct {cause = cause, addr = virtaddr(exc_addr)}),
-    None() => Ext_DataAddr_OK(virtaddr(newAddr)),
+    Some(cause) => Ext_DataAddr_Error(struct {cause = cause, addr = Virtaddr(exc_addr)}),
+    None() => Ext_DataAddr_OK(Virtaddr(newAddr)),
   }
 }
 
@@ -201,7 +201,7 @@ function ext_check_xret_priv (p : Privilege) : Privilege -> bool = {
 
 /* Called if above check fails */
 function ext_fail_xret_priv () : unit -> unit =
-  handle_cheri_exception(CapCheckType_Inst, CapEx_PermissionViolation, virtaddr(zeros()))
+  handle_cheri_exception(CapCheckType_Inst, CapEx_PermissionViolation, Virtaddr(zeros()))
 
 /* Require ASR on any CSR that is not "unprivileged", i.e. accessible from U mode
   The exception for this is Zstid CSRs which always require ASR on writes and never require
@@ -223,7 +223,7 @@ function ext_check_CSR (csrno : bits(12), p : Privilege, isWrite : bool, op : cs
 
 function ext_check_CSR_fail (fail_type : ext_csr_exc_type) -> unit = {
   match fail_type {
-    CHERIPermExc => handle_cheri_exception(CapCheckType_Inst, CapEx_PermissionViolation, virtaddr(zeros())),
+    CHERIPermExc => handle_cheri_exception(CapCheckType_Inst, CapEx_PermissionViolation, Virtaddr(zeros())),
     IllegalInstruction => handle_illegal(),
   };
 }
