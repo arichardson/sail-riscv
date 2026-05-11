@@ -6,13 +6,6 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-// Is the Sstc stimecmp extension supported.
-val sys_enable_sstc = pure "sys_enable_sstc" : unit -> bool
-
-function clause extensionEnabled(Ext_Sstc) = sys_enable_sstc()
-
-register stimecmp : bits(64)
-
 /* Sstc - supervisor time compare */
 mapping clause csr_name_map = 0x14D  <-> "stimecmp"
 mapping clause csr_name_map = 0x15D  <-> "stimecmph"
