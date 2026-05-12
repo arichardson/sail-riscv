@@ -142,8 +142,6 @@ val sys_enable_sv57 = pure "sys_enable_sv57" : unit -> bool
 
 val sys_enable_tlb = pure "sys_enable_tlb" : unit -> bool
 
-val sys_enable_svnapot = pure "sys_enable_svnapot" : unit -> bool
-
 // maskmax6 value for Sdtrig
 val sys_maskmax6 = pure "sys_maskmax6" : unit -> range(0, 63)
 
@@ -157,18 +155,25 @@ function clause currentlyEnabled(Ext_Sstc) = hartSupports(Ext_Sstc)
 val ext_veto_disable_C : unit -> bool
 
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
-  let  v = Mk_Misa(v);
+  let v = Mk_Misa(v);
   /* Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes */
   if   not(sys_enable_writable_misa()) | (v[C] == 0b0 & (nextPC[1] == bitone))
   then m
-  else {
-    // Suppress enabling C if it is not supported.
-    let m = if not(hartSupports(Ext_C)) then m else [m with C = v[C]];
-    /* Suppress updates to misa.{f,d} if disabled at boot */
-    if   not(hartSupports(Ext_F))
-    then m
-    else [m with F = v[F], D = v[D] & v[F]]
-  }
+  else [m with
+    A = if hartSupports(Ext_A) then v[A] else 0b0,
+    B = if hartSupports(Ext_B) then v[B] else 0b0,
+    C = if hartSupports(Ext_C) then v[C] else 0b0,
+    D = if hartSupports(Ext_D) & v[F] == 0b1 then v[D] else 0b0,
+    F = if hartSupports(Ext_F) then v[F] else 0b0,
+    // H = if hartSupports(Ext_H) then v[H] else 0b0, TODO: Not supported yet
+    I = 0b1, // I is currently always supported
+    M = if hartSupports(Ext_M) then v[M] else 0b0,
+    // Q = if hartSupports(Ext_Q) then v[Q] else 0b0, TODO: Not supported yet
+    S = if hartSupports(Ext_S) & v[U] == 0b1 then v[S] else 0b0,
+    U = if hartSupports(Ext_U) then v[U] else 0b0,
+    V = if hartSupports(Ext_V) & v[F] == 0b1 & v[D] == 0b1 then v[V] else 0b0,
+    // X = ... TODO: If custom extensions are present this should be 1
+  ]
 }
 
 mapping clause csr_name_map = 0x301  <-> "misa"
@@ -176,21 +181,16 @@ function clause is_CSR_defined(0x301) = true // misa
 function clause read_CSR(0x301) = misa.bits
 function clause write_CSR(0x301, value) = { misa = legalize_misa(misa, value); misa.bits }
 
-// Are user and supervisor mode supported by the hardware?
-// TODO: Don't hard-code these.
-function sys_enable_user() -> bool = true
-function sys_enable_supervisor() -> bool = true
-
 // Are supervisor/user mode currently enabled? Although
 // unlikely and not currently supported by the model,
 // you are technically allowed to have writable misa[U/S].
-function clause currentlyEnabled(Ext_U) = misa[U] == 0b1
-function clause currentlyEnabled(Ext_S) = misa[S] == 0b1
+function clause currentlyEnabled(Ext_U) = hartSupports(Ext_U) & misa[U] == 0b1
+function clause currentlyEnabled(Ext_S) = hartSupports(Ext_S) & misa[S] == 0b1
 // Note the model doesn't support hypervisor mode yet.
-function clause currentlyEnabled(Ext_H) = misa[H] == 0b1
+function clause currentlyEnabled(Ext_H) = hartSupports(Ext_H) & misa[H] == 0b1
 
 // Svnapot depends on Sv39.
-function clause currentlyEnabled(Ext_Svnapot) = sys_enable_svnapot() & sys_enable_sv39()
+function clause currentlyEnabled(Ext_Svnapot) = hartSupports(Ext_Svnapot) & sys_enable_sv39()
 
 /*
  * Illegal values legalized to least privileged mode supported.
@@ -295,8 +295,8 @@ register mstatus : Mstatus = {
   [ Mk_Mstatus(zeros()) with
     // These fields do not exist on RV32 and are read-only zero
     // if the corresponding mode is not supported.
-    SXL = if xlen != 32 & sys_enable_supervisor() then mxl else zeros(),
-    UXL = if xlen != 32 & sys_enable_user() then mxl else zeros(),
+    SXL = if xlen != 32 & hartSupports(Ext_S) then mxl else zeros(),
+    UXL = if xlen != 32 & hartSupports(Ext_U) then mxl else zeros(),
   ]
 }
 

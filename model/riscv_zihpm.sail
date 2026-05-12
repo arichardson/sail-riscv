@@ -9,11 +9,8 @@
 /* Which bits of hpmevent are writeable. This only affects the lower 32 bits despite the return type. */
 val sys_hpmevent_writable_bits = pure "sys_hpmevent_writable_bits" : unit -> bits(64)
 
-val sys_enable_zihpm = pure "sys_enable_zihpm" : unit -> bool
-val sys_enable_sscofpmf = pure "sys_enable_sscofpmf" : unit -> bool
-
 /* Hardware Performance Monitoring counters */
-function clause currentlyEnabled(Ext_Zihpm) = sys_enable_zihpm()
+function clause currentlyEnabled(Ext_Zihpm) = hartSupports(Ext_Zihpm) & currentlyEnabled(Ext_Zicntr)
 
 /* Hardware performance monitoring counters */
 mapping clause csr_name_map = 0xC03  <-> "hpmcounter3"

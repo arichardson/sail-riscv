@@ -186,11 +186,6 @@ bool sys_enable_pbmt(unit u)
   return true;
 }
 
-bool sys_enable_sscofpmf(unit u)
-{
-  return true;
-}
-
 bool sys_enable_sv32(unit u)
 {
   return true;
@@ -212,11 +207,6 @@ bool sys_enable_sv57(unit u)
 }
 
 bool sys_enable_svnapot(unit u)
-{
-  return true;
-}
-
-bool sys_enable_zihpm(unit u)
 {
   return true;
 }
