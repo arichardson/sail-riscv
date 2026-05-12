@@ -166,10 +166,6 @@ bool sys_enable_pbmt(unit u) {
   return true;
 }
 
-bool sys_enable_sscofpmf(unit u) {
-  return true;
-}
-
 bool sys_enable_sv32(unit u) {
   return true;
 }
@@ -183,46 +179,6 @@ bool sys_enable_sv48(unit u) {
 }
 
 bool sys_enable_sv57(unit u) {
-  return true;
-}
-
-bool sys_enable_svnapot(unit u) {
-  return true;
-}
-
-bool sys_enable_zba(unit u) {
-  return true;
-}
-
-bool sys_enable_zbb(unit u) {
-  return true;
-}
-
-bool sys_enable_zbc(unit u) {
-  return true;
-}
-
-bool sys_enable_zbkb(unit u) {
-  return true;
-}
-
-bool sys_enable_zbkc(unit u) {
-  return true;
-}
-
-bool sys_enable_zbs(unit u) {
-  return true;
-}
-
-bool sys_enable_zfh(unit u) {
-  return true;
-}
-
-bool sys_enable_zfhmin(unit u) {
-  return true;
-}
-
-bool sys_enable_zihpm(unit u) {
   return true;
 }
 

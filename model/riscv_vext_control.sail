@@ -6,7 +6,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                                */
 /*=======================================================================================*/
 
-function clause currentlyEnabled(Ext_V) = (misa[V] == 0b1) & (mstatus[VS] != 0b00) & hartSupports(Ext_V)
+function clause currentlyEnabled(Ext_V) = hartSupports(Ext_V) & (misa[V] == 0b1) & (mstatus[VS] != 0b00)
 
 function clause currentlyEnabled(Ext_Zvfhmin) = sys_enable_zvfhmin() & currentlyEnabled(Ext_F) & currentlyEnabled(Ext_V)
 
