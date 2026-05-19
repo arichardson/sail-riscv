@@ -283,6 +283,7 @@ function translate_TLB_miss forall 'v, is_sv_mode('v) . (
           add_to_TLB(sv_width, asid, vpn, ppn, pte, pteAddr, level, global);
           TR_Address(ppn, pbmt, ext_ptw)
         },
+        Ok(None()) => TR_Address(ppn, pbmt, ext_ptw),
         // pte needs dirty/accessed update but that is not enabled
         Err(e) => TR_Failure(e, ext_ptw)
       }
