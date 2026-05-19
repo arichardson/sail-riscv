@@ -17,7 +17,7 @@ let  cap_addr_width = sizeof(cap_addr_width)
 type cap_len_width : Int = cap_addr_width + 1
 let  cap_len_width = sizeof(cap_len_width)
 
-let cap_max_addr = MAX(cap_addr_width)
+let cap_max_addr = pow2(cap_addr_width) - 1
 
 // 64 or 128 bits.
 type CapBits = bits(8 * cap_size)
