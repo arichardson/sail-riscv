@@ -10,6 +10,3 @@
 
 val MEMr_tag = pure "read_tag_bool"  : bits(64) -> bool
 val MEMw_tag = impure "write_tag_bool" : (bits(64) , bool) -> unit
-
-val MAX : forall 'n, 'n >= 0 . atom('n) -> atom(2 ^ 'n - 1)
-function MAX(n) = pow2(n) - 1
