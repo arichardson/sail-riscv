@@ -9,13 +9,13 @@
 /* ****************************************************************** */
 union clause ast = ZBA_RTYPEUW_capmode : (regidx, regidx, regidx, bropw_zba)
 
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_ADDUW)           if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, ADDUW)           if currentlyEnabled(Ext_Zba) & xlen == 64
   <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b000 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH1ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, SH1ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH2ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, SH2ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
-mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, RISCV_SH3ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
+mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, SH3ADDUW)        if currentlyEnabled(Ext_Zba) & xlen == 64
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0111011 if currentlyEnabled(Ext_Zba) & xlen == 64
 
 mapping clause assembly = ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)
@@ -48,10 +48,10 @@ function clause execute (ZBA_RTYPEUW_capmode(cs2, rs1, cd, op)) = {
   let rs1_val = X(rs1);
   let cs2_val = C(cs2);
   let shamt : range(0,3) = match op {
-    RISCV_ADDUW    => 0,
-    RISCV_SH1ADDUW => 1,
-    RISCV_SH2ADDUW => 2,
-    RISCV_SH3ADDUW => 3,
+    ADDUW    => 0,
+    SH1ADDUW => 1,
+    SH2ADDUW => 2,
+    SH3ADDUW => 3,
   };
   let result = incCapAddrChecked(cs2_val, zero_extend(rs1_val[31..0]) << shamt);
   C(cd) = result;
@@ -114,11 +114,11 @@ function clause execute (ZBA_SH4ADDUW_capmode(cs2, rs1, cd)) = {
 /* ****************************************************************** */
 union clause ast = ZBA_RTYPE_capmode : (regidx, regidx, regidx, brop_zba)
 
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH1ADD)            if currentlyEnabled(Ext_Zba)
+mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, SH1ADD)            if currentlyEnabled(Ext_Zba)
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b010 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH2ADD)            if currentlyEnabled(Ext_Zba)
+mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, SH2ADD)            if currentlyEnabled(Ext_Zba)
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b100 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
-mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, RISCV_SH3ADD)            if currentlyEnabled(Ext_Zba)
+mapping clause encdec_capmode = ZBA_RTYPE_capmode(cs2, rs1, cd, SH3ADD)            if currentlyEnabled(Ext_Zba)
   <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b110 @ encdec_reg(cd) @ 0b0110011 if currentlyEnabled(Ext_Zba)
 
 mapping clause assembly = ZBA_RTYPE_capmode(cs2, rs1, cd, op)
@@ -139,9 +139,9 @@ function clause execute (ZBA_RTYPE_capmode(cs2, rs1, cd, op)) = {
   let rs1_val = X(rs1);
   let cs2_val = C(cs2);
   let shamt : range(0,3) = match op {
-    RISCV_SH1ADD => 1,
-    RISCV_SH2ADD => 2,
-    RISCV_SH3ADD => 3,
+    SH1ADD => 1,
+    SH2ADD => 2,
+    SH3ADD => 3,
   };
   let result = incCapAddrChecked(cs2_val, rs1_val << shamt);
   C(cd) = result;
