@@ -12,6 +12,9 @@ type mem_meta = bool
 
 let default_meta : mem_meta = false
 
+val mem_tag_write_callback = pure {c: "mem_tag_write_callback"} : (/* addr */ physaddrbits, /* value */ bool) -> unit
+val mem_tag_read_callback = pure {c: "mem_tag_read_callback"} : (/* addr */ physaddrbits, /* value */ bool) -> unit
+
 /* address LSB truncation/extension */
 type tagaddrbits = bits(physaddrbits_len - log2_cap_size)
 function addr_to_tag_addr(addr : physaddrbits) -> tagaddrbits = addr[physaddrbits_len - 1 .. log2_cap_size]

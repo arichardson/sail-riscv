@@ -300,7 +300,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
  * currently assumed to have the same alignment constraints as their
  * data.
  */
-val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (physaddr, int('n), bits(8 * 'n), AccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
+val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (PBMT, physaddr, int('n), bits(8 * 'n), AccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
 function mem_write_value_priv_meta (pbmt, paddr, width, value, typ, priv, meta, aq, rl, con) = {
   if (rl | con) & not(is_aligned_addr(paddr, width))
   then Err(E_SAMO_Addr_Align())

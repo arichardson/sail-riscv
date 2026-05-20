@@ -85,9 +85,7 @@ function wC (Regno(r) : regno, v : regtype) -> unit = {
     _  => internal_error(__FILE__, __LINE__, "Invalid capability register")
   };
   if (r != 0) then {
-     rvfi_wX(Regno(r), v.address);
-     if get_config_print_reg() then
-       print_reg("x" ^ dec_str(r) ^ " <- " ^ RegStr(v));
+     xreg_write_callback(regno_to_regidx(Regno(r)), v.address);
   }
 }
 
