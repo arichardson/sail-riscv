@@ -179,7 +179,6 @@ foreach (xlen IN ITEMS 32 64)
             endif()
 
             set(sail_regs_srcs
-                "riscv_csr_begin.sail"
                 "riscv_callbacks.sail"
                 "cheri/cheri_reg_type.sail"
                 "riscv_freg_type.sail"
