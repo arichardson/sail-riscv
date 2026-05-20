@@ -31,8 +31,7 @@ function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, tag : me
   let tag = tag & is_taggable(Physaddr(addr), width);
 
   let tag_addr = addr_to_tag_addr(addr);
-  if get_config_print_mem() then
-    print_mem("tag[" ^ BitStr(tag_addr_to_addr(tag_addr)) ^ "] <- " ^ (if tag then "1" else "0"));
+  mem_tag_write_callback(tag_addr_to_addr(tag_addr), tag);
   MEMw_tag(zero_extend(tag_addr), tag);
   /* If the write crosses a cap_size alignment boundary then we need
    * to write the tag for the subsequent region.  Writes greater than
@@ -40,8 +39,7 @@ function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, tag : me
    */
   let tag_addr2 = addr_to_tag_addr(addr + width - 1);
   if tag_addr != tag_addr2 then {
-    if get_config_print_mem() then
-      print_mem("tag[" ^ BitStr(tag_addr_to_addr(tag_addr2)) ^ "] <- " ^ (if tag then "1" else "0"));
+    mem_tag_write_callback(tag_addr_to_addr(tag_addr), tag);
     MEMw_tag(zero_extend(tag_addr2), tag);
   }
 }
@@ -50,8 +48,7 @@ function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, tag : me
 function __ReadRAM_Meta(addr : physaddrbits, width : mem_access_width) -> mem_meta = {
   let tag_addr = addr_to_tag_addr(addr);
   let tag = MEMr_tag(zero_extend(tag_addr));
-  if get_config_print_mem() then
-    print_mem("tag[R," ^ BitStr(tag_addr_to_addr(tag_addr)) ^ "] -> " ^ (if tag then "1" else "0"));
+  mem_tag_read_callback(tag_addr_to_addr(tag_addr), tag);
 
   // Read false if reading from untaggable memory. We could potentially
   // get away without this since we never allow writing tags to untaggable

@@ -62,17 +62,8 @@ function writeback_vset(vtype_new: xlenbits, vl_new : xlenbits) -> unit = {
   vl = vl_new;
   set_vstart(zeros());
 
-  if get_config_print_reg() then
-    print_reg("CSR vtype <- " ^ BitStr(vtype.bits));
-  track_writeCSR(csr_name_map("vtype"));
-
-  if get_config_print_reg() then
-    print_reg("CSR vl <- " ^ BitStr(vl));
-  track_writeCSR(csr_name_map("vl"));
-
-  if get_config_print_reg() then
-    print_reg("CSR vstart <- " ^ BitStr(vstart));
-  // vstart tracked in set_vstart() already.
+  csr_write_callback("vtype", vtype.bits);
+  csr_write_callback("vl", vl);
 }
 
 function vl_use_ceil() -> bool = config extensions.V.vl_use_ceil
@@ -143,7 +134,10 @@ function process_vset(vtype_bits_new : xlenbits, AVL : option(nat), rd : regidx)
 
   X(rd) = vl_new;
 
-  writeback_vset(vtype_new.bits, vl_new);
+  csr_write_callback("vtype", vtype.bits);
+  csr_write_callback("vl", vl);
+  csr_write_callback("vstart", zero_extend(vstart));
+
   RETIRE_SUCCESS
 }
 
