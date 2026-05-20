@@ -69,8 +69,7 @@ function write_clen_csr(csr : csreg, value : Capability) -> unit = {
 
     _ => internal_error(__FILE__, __LINE__, "write_clen_csr for XLEN CSR; this should not be possible"),
   };
-  if   get_config_print_reg()
-  then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ capToString(res) ^ " (input: " ^ capToString(value) ^ ")")
+  csr_write_callback(csr, res.address)
 }
 
 // Write a capability CSR (is_clen_csr(csr) is true) with xlenbits.
@@ -102,8 +101,7 @@ function write_clen_csr_with_xlen(csr : csreg, value : xlenbits) -> unit = {
 
     _ => internal_error(__FILE__, __LINE__, "write_clen_csr_with_xlen for XLEN CSR; this should not be possible"),
   };
-  if   get_config_print_reg()
-  then print_reg("CSR " ^ to_str(csr) ^ " <- " ^ capToString(res) ^ " (input addr: " ^ BitStr(value) ^ ")")
+  csr_write_callback(csr, res.address)
 }
 
 // Read a capability CSR (is_clen_csr(csr) is true) returning the entire capability.

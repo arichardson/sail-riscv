@@ -78,9 +78,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
     (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
     (Read(Data), None()) => Err(E_Load_Access_Fault()),
     (_,          None()) => Err(E_SAMO_Access_Fault()),
-    (_,      Some(v, m)) => { if   get_config_print_mem()
-                              then print_mem("mem[" ^ to_str(t) ^ "," ^ hex_bits_str(bits_of(paddr)) ^ "] -> " ^ BitStr(v));
-                              Ok(v, m) }
+    (_,      Some(v, m)) => Ok(v, m),
   }
 }
 
@@ -229,8 +227,21 @@ val mem_read_meta      : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_a
 val mem_read_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (AccessType(ext_access_type), Privilege, PBMT, physaddr, int('n), bool, bool, bool, bool) -> MemoryOpResult((bits(8 * 'n), mem_meta))
 
 /* The most generic memory read operation */
-function mem_read_priv_meta (typ, priv, pbmt, paddr, width, aq, rl, res, meta) =
-  checked_mem_read(typ, priv, pbmt, paddr, width, aq, rl, res, meta)
+function mem_read_priv_meta (typ, priv, pbmt, paddr, width, aq, rl, res, meta) = {
+  let result : MemoryOpResult((bits(8 * 'n), mem_meta)) =
+    if (aq | res) & not(is_aligned_addr(paddr, width))
+    then Err(E_Load_Addr_Align())
+    else match (aq, rl, res) {
+      (false, true,  false) => throw(Error_not_implemented("load.rl")),
+      (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
+      (_, _, _)             => checked_mem_read(typ, priv, pbmt, paddr, width, aq, rl, res, meta)
+    };
+  match result {
+    Ok(value, _) => mem_read_callback(to_str(typ), bits_of(paddr), width, value),
+    Err(e) => mem_exception_callback(bits_of(paddr), num_of_ExceptionType(e)),
+  };
+  result
+}
 
 function mem_read_meta (typ, pbmt, paddr, width, aq, rl, res, meta) =
   mem_read_priv_meta(typ, effectivePrivilege(typ, mstatus, cur_privilege()), pbmt, paddr, width, aq, rl, res, meta)
@@ -250,12 +261,8 @@ function mem_write_ea (addr, width, aq, rl, con) =
   else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
 
 // only used for actual memory regions, to avoid MMIO effects
-function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
-  let result = write_ram(wk, paddr, width, data, meta);
-  if   get_config_print_mem()
-  then print_mem("mem[" ^ BitStr(bits_of(paddr)) ^ "] <- " ^ BitStr(data));
-  Ok(result)
-}
+function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) =
+  Ok(write_ram(wk, paddr, width, data, meta))
 
 /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
 function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
@@ -294,8 +301,18 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
  * data.
  */
 val mem_write_value_priv_meta : forall 'n, 0 < 'n <= max_mem_access . (PBMT, physaddr, int('n), bits(8 * 'n), AccessType(ext_access_type), Privilege, mem_meta, bool, bool, bool) -> MemoryOpResult(bool)
-function mem_write_value_priv_meta (pbmt, paddr, width, value, typ, priv, meta, aq, rl, con) =
-  checked_mem_write(pbmt, paddr, width, value, typ, priv, aq, rl, con, meta)
+function mem_write_value_priv_meta (pbmt, paddr, width, value, typ, priv, meta, aq, rl, con) = {
+  if (rl | con) & not(is_aligned_addr(paddr, width))
+  then Err(E_SAMO_Addr_Align())
+  else {
+    let result = checked_mem_write(pbmt, paddr, width, value, typ, priv, meta, aq, rl, con);
+    match result {
+      Ok(_) => mem_write_callback(bits_of(paddr), width, value),
+      Err(e) => mem_exception_callback(bits_of(paddr), num_of_ExceptionType(e)),
+    };
+    result
+  }
+}
 
 /* Memory write with explicit Privilege, implicit AccessType and metadata */
 val mem_write_value_priv : forall 'n, 0 < 'n <= max_mem_access . (PBMT, physaddr, int('n), bits(8 * 'n), Privilege, bool, bool, bool) -> MemoryOpResult(bool)

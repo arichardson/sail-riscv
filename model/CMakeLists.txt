@@ -179,6 +179,8 @@ foreach (xlen IN ITEMS 32 64)
             endif()
 
             set(sail_regs_srcs
+                "riscv_csr_begin.sail"
+                "riscv_callbacks.sail"
                 "cheri/cheri_reg_type.sail"
                 "riscv_freg_type.sail"
                 "cheri/cheri_vmem_types.sail"
@@ -203,7 +205,6 @@ foreach (xlen IN ITEMS 32 64)
                 "cheri/cheri_riscv_types.sail"
                 "riscv_extensions.sail"
                 "riscv_types.sail"
-                "riscv_csr_begin.sail"
                 "riscv_convert_invalid_addr.sail"
                 ${sail_regs_srcs}
                 ${sail_sys_srcs}
@@ -295,6 +296,7 @@ foreach (xlen IN ITEMS 32 64)
                         # Extra #include's.
                         --c-include riscv_prelude.h
                         --c-include riscv_platform.h
+                        --c-include riscv_callbacks.h
                         # Don't dead-code eliminate these functions. These should match the
                         # ones used from riscv_sail.h
                         --c-preserve init_model
@@ -315,6 +317,11 @@ foreach (xlen IN ITEMS 32 64)
                         --c-preserve rvfi_halt_exec_packet
                         --c-preserve print_instr_packet
                         --c-preserve print_rvfi_exec
+                        --c-preserve rvfi_write
+                        --c-preserve rvfi_read
+                        --c-preserve rvfi_mem_exception
+                        --c-preserve rvfi_wX
+                        --c-preserve rvfi_trap
                         # Input files.
                         ${sail_srcs}
                 )

@@ -12,6 +12,9 @@ type mem_meta = bool
 
 let default_meta : mem_meta = false
 
+val mem_tag_write_callback = pure {c: "mem_tag_write_callback"} : (/* addr */ physaddrbits, /* value */ bool) -> unit
+val mem_tag_read_callback = pure {c: "mem_tag_read_callback"} : (/* addr */ physaddrbits, /* value */ bool) -> unit
+
 /* address LSB truncation/extension */
 type tagaddrbits = bits(physaddrbits_len - log2_cap_size)
 function addr_to_tag_addr(addr : physaddrbits) -> tagaddrbits = addr[physaddrbits_len - 1 .. log2_cap_size]
@@ -31,8 +34,7 @@ function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, tag : me
   let tag = tag & is_taggable(Physaddr(addr), width);
 
   let tag_addr = addr_to_tag_addr(addr);
-  if get_config_print_mem() then
-    print_mem("tag[" ^ BitStr(tag_addr_to_addr(tag_addr)) ^ "] <- " ^ (if tag then "1" else "0"));
+  mem_tag_write_callback(tag_addr_to_addr(tag_addr), tag);
   MEMw_tag(zero_extend(tag_addr), tag);
   /* If the write crosses a cap_size alignment boundary then we need
    * to write the tag for the subsequent region.  Writes greater than
@@ -40,8 +42,7 @@ function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, tag : me
    */
   let tag_addr2 = addr_to_tag_addr(addr + width - 1);
   if tag_addr != tag_addr2 then {
-    if get_config_print_mem() then
-      print_mem("tag[" ^ BitStr(tag_addr_to_addr(tag_addr2)) ^ "] <- " ^ (if tag then "1" else "0"));
+    mem_tag_write_callback(tag_addr_to_addr(tag_addr), tag);
     MEMw_tag(zero_extend(tag_addr2), tag);
   }
 }
@@ -50,8 +51,7 @@ function __WriteRAM_Meta(addr : physaddrbits, width : mem_access_width, tag : me
 function __ReadRAM_Meta(addr : physaddrbits, width : mem_access_width) -> mem_meta = {
   let tag_addr = addr_to_tag_addr(addr);
   let tag = MEMr_tag(zero_extend(tag_addr));
-  if get_config_print_mem() then
-    print_mem("tag[R," ^ BitStr(tag_addr_to_addr(tag_addr)) ^ "] -> " ^ (if tag then "1" else "0"));
+  mem_tag_read_callback(tag_addr_to_addr(tag_addr), tag);
 
   // Read false if reading from untaggable memory. We could potentially
   // get away without this since we never allow writing tags to untaggable
