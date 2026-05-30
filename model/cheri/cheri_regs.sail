@@ -84,14 +84,14 @@ function wC (Regno(r) : regno, v : regtype) -> unit = {
     31 => x31 = v,
     _  => internal_error(__FILE__, __LINE__, "Invalid capability register")
   };
-  if (r != 0) then {
-     xreg_write_callback(regno_to_regidx(Regno(r)), v.address);
-  }
+  if r != 0 then xreg_write_callback(Regidx(to_bits(r)), v.address)
 }
 
-function rC_bits(r: regidx) -> regtype = rC(regidx_to_regno(r))
+function rC_bits(Regidx(i): regidx) -> regtype = rC(Regno(unsigned(i)))
 
-function wC_bits(r: regidx, v: regtype) -> unit = wC(regidx_to_regno(r), v)
+function wC_bits(Regidx(i): regidx, v: regtype) -> unit = {
+  wC(Regno(unsigned(i))) = v
+}
 
 overload C = {rC_bits, wC_bits, rC, wC}
 
