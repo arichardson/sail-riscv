@@ -39,7 +39,8 @@ unit mem_tag_write_callback(sbits paddr, bool value)
 {
   if (config_print_mem_access) {
     fprintf(trace_log, "tag[0x%0*" PRIX64 "] <- %d",
-        static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits, (int)value);
+            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits,
+            (int)value);
   }
   return UNIT;
 }
@@ -66,7 +67,8 @@ unit mem_tag_read_callback(sbits paddr, bool value)
 {
   if (config_print_mem_access) {
     fprintf(trace_log, "tag[0x%0*" PRIX64 "] -> %d",
-    static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits, (int)value);
+            static_cast<int>((zphysaddrbits_len + 3) / 4), paddr.bits,
+            (int)value);
   }
   return UNIT;
 }

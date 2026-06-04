@@ -257,11 +257,11 @@
     "Sv57": {
       "supported": true
     },
-    "Svnapot" : {
-      "supported" : false
+    "Svnapot": {
+      "supported": false
     },
-    "Svpbmt" : {
-      "supported" : false
+    "Svpbmt": {
+      "supported": false
     }
   }
 }
