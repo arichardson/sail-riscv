@@ -96,7 +96,8 @@ mach_bits plat_nmi_handler(unit u)
   return 0;
 }
 
-sbits plat_pma_address(mach_bits i) {
+sbits plat_pma_address(mach_bits i)
+{
   sbits result;
   result.len = zphysaddrbits_len;
   result.bits = 0;
@@ -158,7 +159,8 @@ mach_bits plat_pma_reservability_int(mach_bits i)
   return 2; // RsrvEventual (eventual success guarantee for LR/SC)
 }
 
-sbits plat_pma_size(mach_bits i) {
+sbits plat_pma_size(mach_bits i)
+{
   sbits result;
   result.len = zphysaddrbits_len;
   result.bits = 0xF0000000;
