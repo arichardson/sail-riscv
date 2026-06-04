@@ -184,7 +184,7 @@ foreach (variant IN ITEMS "" "smt" "rocq" "rmem" "lean" "lem" "isabelle")
         "riscv_pmp_control.sail"
         "cheri/cheri_sys_regs.sail"
         "cheri/cheri_regs.sail"
-        "cheri/cheri_pc_access.sail"
+        "riscv_pc_access.sail"
         "riscv_vreg_type.sail"
         "riscv_vext_regs.sail"
     )
