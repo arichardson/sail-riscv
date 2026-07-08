@@ -17,7 +17,6 @@ if (APPLE)
         COMMAND ${HOMEBREW} --prefix llvm
         OUTPUT_VARIABLE HOMEBREW_LLVM_DIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
-        COMMAND_ERROR_IS_FATAL NONE
     )
     find_program(CLANG_BIN "clang" PATHS "${HOMEBREW_LLVM_DIR}/bin" NO_DEFAULT_PATH)
 endif()
