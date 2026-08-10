@@ -108,11 +108,9 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_insts_begin.sail"
                 ${sail_seq_inst}
                 "riscv_insts_end.sail"
+                "cheri/cheri_csr_ext.sail"
+                "riscv_csr_end.sail"
             )
-            if (variant STREQUAL "rvfi")
-                list(APPEND sail_seq_inst_srcs "cheri/cheri_csr_ext.sail")
-            endif()
-            list(APPEND sail_seq_inst_srcs "riscv_csr_end.sail")
 
             set(sail_sys_srcs
                 "riscv_vext_control.sail"
@@ -163,6 +161,8 @@ foreach (xlen IN ITEMS 32 64)
 
             if (variant STREQUAL "rvfi")
                 list(APPEND prelude "rvfi_dii.sail")
+            else()
+                list(APPEND prelude "riscv_rvfi_stub.sail")
             endif()
 
             set(sail_regs_srcs
@@ -208,7 +208,7 @@ foreach (xlen IN ITEMS 32 64)
                 set(riscv_step_ext "cheri/cheri_step_ext.sail" "riscv_step_rvfi.sail")
                 set(riscv_fetch "riscv_fetch_rvfi.sail")
             else()
-                set(riscv_step_ext "cheri/cheri_step_ext.sail" "cheri/cheri_step_ext_nonrvfi.sail")
+                set(riscv_step_ext "cheri/cheri_step_ext.sail")
                 set(riscv_fetch "riscv_fetch.sail")
             endif()
 
@@ -218,6 +218,8 @@ foreach (xlen IN ITEMS 32 64)
                 "cheri/cheri_decode_ext.sail"
                 ${riscv_fetch}
                 "riscv_step.sail"
+                "cheri/test_main_ext.sail"
+                "test_main.sail"
             )
 
             if (variant STREQUAL "coq")
@@ -284,6 +286,7 @@ foreach (xlen IN ITEMS 32 64)
                         --c-preserve step
                         --c-preserve tick_clock
                         --c-preserve tick_platform
+                        --c-preserve test_main
                         # Preserve RVFI functions.
                         --c-preserve rvfi_set_instr_packet
                         --c-preserve rvfi_get_cmd

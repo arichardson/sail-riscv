@@ -10,9 +10,6 @@
 
 /* returns whether to increment the step count in the trace */
 function step(step_no : int) -> bool = {
-  /* for step extensions */
-  ext_pre_step_hook();
-
   /*
    * This records whether or not minstret should be incremented when
    * the instruction is retired. Since retirement occurs before CSR
@@ -40,7 +37,7 @@ function step(step_no : int) -> bool = {
         },
         None() => {
           /* the extension hook interposes on the fetch result */
-          match ext_fetch_hook(fetch()) {
+          match fetch() {
             /* extension error */
             F_Ext_Error(e)   => {
               ext_handle_fetch_check_error(e);
@@ -88,7 +85,7 @@ function step(step_no : int) -> bool = {
   update_minstret();
 
   /* for step extensions */
-  ext_post_step_hook();
+  ext_rvfi_post_step_hook();
 
   stepped
 }
@@ -101,7 +98,6 @@ function reset() -> unit = {
   // To allow model extensions (code outside this repo) to perform additional reset.
   ext_reset_misa();
   ext_cheri_reset();
-  ext_reset();
 }
 
 // Initialize model state. This is only called once; not for every chip reset.

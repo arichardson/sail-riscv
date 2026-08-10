@@ -54,6 +54,7 @@ enum {
   OPT_ENABLE_ZICBOZ,
   OPT_ENABLE_SSTC,
   OPT_CACHE_BLOCK_SIZE,
+  OPT_DO_SELF_TEST
 };
 
 static bool do_show_times = false;
@@ -71,6 +72,8 @@ static unsigned rvfi_trace_version = 1;
 static int rvfi_dii_port;
 static int rvfi_dii_sock;
 #endif
+
+static bool do_self_test = false;
 
 char *sig_file = NULL;
 uint64_t mem_sig_start = 0;
@@ -154,6 +157,7 @@ static struct option options[] = {
 #ifdef SAILCOV
     {"sailcov-file",                required_argument, 0, 'c'                     },
 #endif
+    {"self-test",                   no_argument,       0, OPT_DO_SELF_TEST        },
     {0,                             0,                 0, 0                       }
 };
 
@@ -434,6 +438,10 @@ static int process_args(int argc, char **argv)
     case OPT_TRACE_OUTPUT:
       trace_log_path = optarg;
       fprintf(stderr, "using %s for trace output.\n", trace_log_path);
+      break;
+    case OPT_DO_SELF_TEST:
+      do_self_test = true;
+      rv_enable_misaligned = true; // Tests assume misaligned allowed
       break;
     case '?':
       print_usage(argv[0], 1);
@@ -976,7 +984,12 @@ int main(int argc, char **argv)
   } else
     entry = load_sail(initial_elf_file, /*main_file=*/true);
 #else
-  uint64_t entry = load_sail(initial_elf_file, /*main_file=*/true);
+  uint64_t entry;
+  if (do_self_test) {
+    entry = 0x80000000;
+  } else {
+    entry = load_sail(initial_elf_file, /*main_file=*/true);
+  }
 #endif
   /* Load any additional ELF files into memory */
   for (int i = files_start + 1; i < argc; i++) {
@@ -991,17 +1004,21 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  do {
-    run_sail();
+  if (do_self_test) {
+    ztest_main(UNIT);
+  } else {
+    do {
+      run_sail();
 #ifndef RVFI_DII
-  } while (0);
+    } while (0);
 #else
-    if (rvfi_dii) {
-      /* Reset for next test */
-      reinit_sail(entry);
-    }
-  } while (rvfi_dii);
+      if (rvfi_dii) {
+        /* Reset for next test */
+        reinit_sail(entry);
+      }
+    } while (rvfi_dii);
 #endif
+  }
   model_fini();
   flush_logs();
   close_logs();
