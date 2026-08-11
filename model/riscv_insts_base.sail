@@ -59,25 +59,16 @@ but this is difficult
 */
 
 function clause execute (RISCV_JAL(imm, rd)) = {
-  let target = PC + sign_extend(imm);
-  /* Extensions get the first checks on the prospective target address. */
-  match ext_control_check_pc(target) {
-    Ext_ControlAddr_Error(e) => {
-      ext_handle_control_check_error(e);
-      RETIRE_FAIL
-    },
-    Ext_ControlAddr_OK(target) => {
-      /* Perform standard alignment check */
-      let target_bits = virtaddr_bits(target);
-      if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
-        handle_mem_exception(target, E_Fetch_Addr_Align());
-        RETIRE_FAIL
-      } else {
-        X(rd) = get_next_pc();
-        set_next_pc(target_bits);
-        RETIRE_SUCCESS
-      }
-    }
+  let target = virtaddr(PC + sign_extend(imm));
+  /* Perform standard alignment check */
+  let target_bits = virtaddr_bits(target);
+  if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
+    handle_mem_exception(target, E_Fetch_Addr_Align());
+    RETIRE_FAIL
+  } else {
+    X(rd) = get_next_pc();
+    set_next_pc(target_bits);
+    RETIRE_SUCCESS
   }
 }
 
@@ -122,23 +113,14 @@ function clause execute (BTYPE(imm, rs2, rs1, op)) = {
     RISCV_BGEU => X(rs1) >=_u X(rs2)
   };
   if taken then {
-    let target = PC + sign_extend(imm);
-    /* Extensions get the first checks on the prospective target address. */
-    match ext_control_check_pc(target) {
-      Ext_ControlAddr_Error(e) => {
-        ext_handle_control_check_error(e);
-        RETIRE_FAIL
-      },
-      Ext_ControlAddr_OK(target) => {
-        let target_bits = virtaddr_bits(target);
-        if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
-          handle_mem_exception(target, E_Fetch_Addr_Align());
-          RETIRE_FAIL
-        } else {
-          set_next_pc(target_bits);
-          RETIRE_SUCCESS
-        }
-      }
+    let target = virtaddr(PC + sign_extend(imm));
+    let target_bits = virtaddr_bits(target);
+    if bit_to_bool(target_bits[1]) & not(extensionEnabled(Ext_Zca)) then {
+      handle_mem_exception(target, E_Fetch_Addr_Align());
+      RETIRE_FAIL
+    } else {
+      set_next_pc(target_bits);
+      RETIRE_SUCCESS
     }
   } else RETIRE_SUCCESS
 }
