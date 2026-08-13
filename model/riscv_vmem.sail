@@ -348,7 +348,7 @@ function translateAddr(
 
   let svAddr = virtaddr_bits(vAddr)[sv_width - 1 .. 0];
   if virtaddr_bits(vAddr) != sign_extend(svAddr) then {
-    TR_Failure(translationException(ac, PTW_Invalid_Addr()), init_ext_ptw)
+    TR_Failure(translationException(ac, PTW_Invalid_Addr(), init_ext_ptw), init_ext_ptw)
   } else {
     let mxr    = mstatus[MXR] == 0b1;
     let do_sum = mstatus[SUM] == 0b1;
@@ -371,7 +371,7 @@ function translateAddr(
         // the assertion above.
         TR_Address(physaddr(zero_extend(paddr)), pbmt, ext_ptw)
       },
-      TR_Failure(f, ext_ptw)  => TR_Failure(translationException(ac, f), ext_ptw)
+      TR_Failure(f, ext_ptw) => TR_Failure(translationException(ac, f, ext_ptw), ext_ptw)
     }
   }
 }

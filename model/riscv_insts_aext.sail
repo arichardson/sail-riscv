@@ -88,7 +88,7 @@ function clause execute(LOADRES(aq, rl, rs1, width, rd)) = {
       if not(is_aligned(virtaddr_bits(vaddr), width))
       then { handle_mem_exception(vaddr, E_Load_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, Read(Data)) {
-        TR_Failure(e, ext_ptw)     => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+        TR_Failure(e, ext_ptw)     => { handle_translate_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(paddr, pbmt, _) =>
           match mem_read(Read(Data), pbmt, paddr, width_bytes, aq, aq & rl, true) {
             Ok(result) => { load_reservation(physaddr_bits(paddr)); X(rd) = sign_extend(result); RETIRE_SUCCESS },
@@ -129,7 +129,7 @@ function clause execute (STORECON(aq, rl, rs2, rs1, width, rd)) = {
         // first because it may fail due to access conditions (PMPs/PMAs).
         match translateAddr(vaddr, Write(Data)) {  /* Write and ReadWrite are equivalent here:
                                                     * both result in a SAMO exception */
-          TR_Failure(e, ext_ptw)    => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+          TR_Failure(e, ext_ptw)    => { handle_translate_exception(vaddr, e); RETIRE_FAIL },
           TR_Address(addr, pbmt, _) => {
             // Explicitly do access checks first in case the memory does
             // not exist or doesn't support LR/SC.
@@ -210,7 +210,7 @@ function clause execute (AMO(op, aq, rl, rs2, rs1, width, rd)) = {
       if not(is_aligned(virtaddr_bits(vaddr), width))
       then { handle_mem_exception(vaddr, E_SAMO_Addr_Align()); RETIRE_FAIL }
       else match translateAddr(vaddr, ReadWrite(Data, Data)) {
-        TR_Failure(e, ext_ptw)    => { handle_translate_exception(vaddr, e, ext_ptw); RETIRE_FAIL },
+        TR_Failure(e, ext_ptw)    => { handle_translate_exception(vaddr, e); RETIRE_FAIL },
         TR_Address(addr, pbmt, _) => {
           let eares = mem_write_ea(addr, width_bytes, aq & rl, rl, true);
           let rs2_val = X(rs2)[width_bytes * 8 - 1 .. 0];

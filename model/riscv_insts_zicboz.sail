@@ -43,7 +43,7 @@ function clause execute(RISCV_ZICBOZ(rs1)) = {
           // was encoded in the instruction. We subtract the negative offset
           // (add the positive offset) to get it. Normally this will be
           // equal to rs1, but pointer masking can change that.
-          TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr - negative_offset, e, ext_ptw); RETIRE_FAIL },
+          TR_Failure(e, ext_ptw) => { handle_translate_exception(vaddr - negative_offset, e); RETIRE_FAIL },
           TR_Address(paddr, pbmt, _) => {
             match mem_write_ea(paddr, cache_block_size, false, false, false) {
               Err(e) => { handle_mem_exception(vaddr - negative_offset, e); RETIRE_FAIL },

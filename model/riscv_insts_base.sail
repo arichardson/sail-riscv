@@ -568,8 +568,7 @@ function clause execute ECALL() = {
                       Supervisor => E_S_EnvCall(),
                       Machine    => E_M_EnvCall()
                     },
-             excinfo = (None() : option(xlenbits)),
-             ext     = None() };
+             excinfo = (None() : option(xlenbits)) };
   set_next_pc(exception_handler(cur_privilege(), CTL_TRAP(t), PC));
   RETIRE_FAIL
 }
