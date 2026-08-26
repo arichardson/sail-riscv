@@ -52,7 +52,10 @@ function process_clean_inval(rs1, cbop, cbop_orig) = {
     CBO_INVAL => Cache(Inval)
   };
 
-  match ext_data_get_addr(rs1, negative_offset, acc_type, cache_block_size) {
+  if cbop_orig == CBO_INVAL & not(ext_check_system_priv()) then {
+    handle_illegal();
+    RETIRE_FAIL
+  } else match ext_data_get_addr(rs1, negative_offset, acc_type, cache_block_size) {
     Ext_DataAddr_Error(e) => { ext_handle_data_check_error(e); RETIRE_FAIL },
     Ext_DataAddr_OK(vaddr) => {
       let res : option(ExceptionType) = match translateAddr(vaddr, Read(Data)) {

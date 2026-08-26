@@ -582,10 +582,9 @@ mapping clause encdec = MRET()
   <-> 0b0011000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute MRET() = {
-  if   cur_privilege() != Machine
+  if   cur_privilege() != Machine |
+       not(ext_check_system_priv())
   then { handle_illegal(); RETIRE_FAIL }
-  else if not(ext_check_xret_priv (Machine))
-  then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
     set_next_pc(exception_handler(cur_privilege(), CTL_MRET(), PC));
     RETIRE_SUCCESS
@@ -601,15 +600,13 @@ mapping clause encdec = SRET()
   <-> 0b0001000 @ 0b00010 @ 0b00000 @ 0b000 @ 0b00000 @ 0b1110011
 
 function clause execute SRET() = {
-  let sret_illegal : bool = match cur_privilege() {
+  let sret_illegal = (match cur_privilege() {
     User       => true,
     Supervisor => not(extensionEnabled(Ext_S)) | mstatus[TSR] == 0b1,
     Machine    => not(extensionEnabled(Ext_S))
-  };
+  }):bool | not(ext_check_system_priv());
   if   sret_illegal
   then { handle_illegal(); RETIRE_FAIL }
-  else if not(ext_check_xret_priv (Supervisor))
-  then { ext_fail_xret_priv(); RETIRE_FAIL }
   else {
     set_next_pc(exception_handler(cur_privilege(), CTL_SRET(), PC));
     RETIRE_SUCCESS
