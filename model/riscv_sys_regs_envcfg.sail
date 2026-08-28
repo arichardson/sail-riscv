@@ -7,7 +7,7 @@ val sys_enable_writable_fiom = pure "sys_enable_writable_fiom" : unit -> bool
 // Is PBMT supported?
 val sys_enable_pbmt = pure "sys_enable_pbmt" : unit -> bool
 
-function legalize_menvcfg(o : MEnvcfg, m : Seccfg, v : bits(64)) -> MEnvcfg = {
+function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
   let v = Mk_MEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,
@@ -20,7 +20,7 @@ function legalize_menvcfg(o : MEnvcfg, m : Seccfg, v : bits(64)) -> MEnvcfg = {
   ]
 }
 
-function legalize_senvcfg(o : SEnvcfg, m : MEnvcfg, v : xlenbits) -> SEnvcfg = {
+function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
   let v = Mk_SEnvcfg(v);
   [o with
     FIOM = if sys_enable_writable_fiom() then v[FIOM] else 0b0,

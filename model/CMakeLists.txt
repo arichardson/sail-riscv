@@ -173,7 +173,6 @@ foreach (xlen IN ITEMS 32 64)
                 "riscv_sstc.sail"
                 "cheri/cheri_sys_regs_types.sail"
                 "cheri/cheri_sys_regs_envcfg.sail"
-                "cheri/cheri_sys_regs_seccfg.sail"
                 "cheri/cheri_sys_regs_xstatus.sail"
                 "riscv_sys_regs.sail"
                 "riscv_pmp_regs.sail"
