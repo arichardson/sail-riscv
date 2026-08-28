@@ -8,8 +8,8 @@ bitfield MEnvcfg : bits(64) = {
   // CHERI Register Enable
   // Controls whether less privileged levels can perform explicit accesses to
   // CHERI registers. Less priviledged levels can read and write CHERI
-  // registers when CRE=1 and can't when CRE=0.
-  CRE    : 28,
+  // registers when Y=1 and can't when Y=0.
+  Y      : 28,
   // Reserved WPRI bits.
   wpri_1 : 27 .. 8,
   // Cache Block Zero instruction Enable
@@ -28,8 +28,8 @@ bitfield SEnvcfg : xlenbits = {
   // CHERI Register Enable
   // Controls whether less privileged levels can perform explicit accesses to
   // CHERI registers. Less priviledged levels can read and write CHERI
-  // registers when CRE=1 and can't when CRE=0.
-  CRE    : 28,
+  // registers when Y=1 and can't when Y=0.
+  Y      : 28,
   // Cache Block Zero instruction Enable
   CBZE   : 7,
   // Cache Block Clean and Flush instruction Enable
