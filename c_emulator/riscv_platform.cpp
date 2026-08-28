@@ -23,6 +23,11 @@ bool sys_enable_rvc(unit)
   return rv_enable_rvc;
 }
 
+bool sys_enable_rvy(unit)
+{
+  return rv_enable_rvy;
+}
+
 bool sys_enable_fdext(unit)
 {
   return rv_enable_fdext;

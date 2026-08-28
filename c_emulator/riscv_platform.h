@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 bool sys_enable_rvc(unit);
+bool sys_enable_rvy(unit);
 bool sys_enable_fdext(unit);
 bool sys_enable_svinval(unit);
 bool sys_enable_zcb(unit);

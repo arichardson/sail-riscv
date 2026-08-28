@@ -18,6 +18,7 @@ extern bool rv_enable_svinval;
 extern bool rv_enable_zcb;
 extern bool rv_enable_zfinx;
 extern bool rv_enable_rvc;
+extern bool rv_enable_rvy;
 extern bool rv_enable_fdext;
 extern bool rv_enable_vext;
 extern bool rv_enable_bext;

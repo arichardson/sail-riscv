@@ -348,6 +348,7 @@ function reset_misa() -> unit = {
   misa[S]   = bool_to_bits(sys_enable_supervisor()); /* supervisor-mode */
   misa[V]   = bool_to_bits(sys_enable_vext()); /* vector extension */
   misa[X]   = bool_to_bits(sys_misa_x());      /* non-standard extension */
+  misa[Y]   = bool_to_bits(sys_enable_rvy());  /* CHERI extension */
 
   if   sys_enable_fdext() & sys_enable_zfinx()
   then internal_error(__FILE__, __LINE__, "F and Zfinx cannot both be enabled!");
