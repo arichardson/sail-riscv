@@ -166,10 +166,12 @@ val sys_enable_zicboz = pure "sys_enable_zicboz" : unit -> bool
 // maskmax6 value for Sdtrig
 val sys_maskmax6 = pure "sys_maskmax6" : unit -> range(0, 63)
 
+val ext_allow_disable_Y : unit -> bool
+
 function legalize_misa(m : Misa, v : xlenbits) -> Misa = {
   let  v = Mk_Misa(v);
   /* Suppress updates to MISA if MISA is not writable or if by disabling C next PC would become misaligned or an extension vetoes */
-  if   not(sys_enable_writable_misa()) | (v[C] == 0b0 & (nextPC[1] == bitone))
+  if   not(sys_enable_writable_misa()) | (v[C] == 0b0 & (nextPC[1] == bitone)) | (m[Y] == 0b1 & v[Y] == 0b0 & not(ext_allow_disable_Y()))
   then m
   else {
     // Suppress enabling C if it is not supported.
