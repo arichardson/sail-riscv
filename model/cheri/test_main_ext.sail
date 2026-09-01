@@ -613,10 +613,10 @@ function test_cheri_pcc_mode(priv : Privilege, cheri_allowed : bool) -> unit = {
 }
 
 function test_cheri_reserved_branches() -> unit = {
-    let instBitsBEQGood = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), BEQ));
-    let instBitsBEQBad = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), BEQ));
-    let instBitsBNEGood = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), BNE));
-    let instBitsBNEBad = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), BNE));
+    let instBitsBEQBad = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), BEQ));
+    let instBitsBEQGood = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), BEQ));
+    let instBitsBNEBad = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), BNE));
+    let instBitsBNEGood = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), BNE));
     // Check that integer mode works with all branches
     PCC = {setCapMode(PCC, IntPtrMode)};
     let ast = ext_decode(instBitsBEQGood);
