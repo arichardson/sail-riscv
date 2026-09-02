@@ -682,15 +682,15 @@ union clause ast = YSENTRY : (regidx, regidx)
  * insnref: ysentry_32bit
  * Seal capability as sealed entry.
  *
- * ysentry rd, rs1
+ * ysentry rd, rs2
  *
- * Capability `rd` is written with the capability in `rs1` with its type bit set to 1.
+ * Capability `rd` is written with the capability in `rs2` with its type bit set to 1.
  * Attempting to seal an already sealed capability will lead to the tag of `rd` being set to 0.
  */
-function clause execute (YSENTRY(rd, rs1)) = {
-  let rs1_cap = Y(rs1);
-  let inCap = clearTagIf(rs1_cap, capIsSealed(rs1_cap));
-  Y(rd) = sealCap(inCap);
+function clause execute (YSENTRY(rd, rs2)) = {
+  let rs2_cap = Y(rs2);
+  let rs2_cap = clearTagIf(rs2_cap, capIsSealed(rs2_cap));
+  Y(rd) = sealCap(rs2_cap);
   RETIRE_SUCCESS
 }
 
@@ -1065,8 +1065,8 @@ mapping clause encdec = SRLIY(rd, rs1)                                          
 
 mapping clause encdec = YMV(rd, rs1)                                             if cheri_registers_enabled()
   <-> 0b0000011 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled()
-mapping clause encdec = YSENTRY(rd, rs1)                                         if cheri_registers_enabled()
-  <-> 0b0010111 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled()
+mapping clause encdec = YSENTRY(rd, rs2)                                         if cheri_registers_enabled()
+  <-> 0b0010111 @ encdec_reg(rs2) @ 0b00000 @ 0b000 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled()
 
 mapping clause encdec = YAMASK(rd, rs1)                                          if cheri_registers_enabled()
   <-> 0b1111000 @ 0b00000 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled()
