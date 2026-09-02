@@ -1044,7 +1044,7 @@ mapping clause assembly = YMODESW(mode) <-> "ymodesw." ^ pointer_mode_mnemonic(m
 /* Two arg */
 
 mapping clause encdec = YMODER(rd, rs1)                                          if cheri_registers_enabled()
-  <-> 0b1111010 @ 0b00111 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled()
+  <-> 0b1111010 @ 0b00110 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled()
 mapping clause encdec = YTYPER(rd, rs1)                                          if cheri_registers_enabled()
   <-> 0b1111010 @ 0b00101 @ encdec_reg(rs1) @ 0b000 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled()
 mapping clause encdec = YPERMR(rd, rs1)                                          if cheri_registers_enabled()
