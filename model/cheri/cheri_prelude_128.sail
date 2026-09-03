@@ -69,8 +69,8 @@ bitfield EncMetadata : bits(64) = {
 // Backwards match failures occur when encoding an unrepresentable combination of fields: this should be
 // prevented by calling legalizeFields when changing the fields.
 mapping ap_p_encdec : bits(cap_AP_P_width) <-> (ArchPerms, PointerMode) = {
-  pointer_mode_encdec(P) @ bool_bits(SL) @ bool_bits(EL) @ bool_bits(LM) @
-  bool_bits(ASR) @ bool_bits(X) @ bool_bits(R) @ bool_bits(W) @ bool_bits(C)
+  bool_bits(SL) @ bool_bits(EL) @ bool_bits(LM) @ bool_bits(ASR) @
+  bool_bits(X) @ bool_bits(R) @ bool_bits(W) @ bool_bits(C) @ pointer_mode_encdec(P)
     if (not(ASR) | X) & (not(C) | (R | W)) & (P == pointer_mode_encdec(0b0) | X) & (not(SL) | C) & (not(EL | LM) | (C & R)) <->
   (struct{R, W, C, X, LM, SL, EL, ASR}, P)
     if (not(ASR) | X) & (not(C) | (R | W)) & (P == pointer_mode_encdec(0b0) | X) & (not(SL) | C) & (not(EL | LM) | (C & R)),
