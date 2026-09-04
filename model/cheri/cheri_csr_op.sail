@@ -20,9 +20,9 @@ function csr_type(csr : csreg) -> CSRLen = match csr {
   0x140 => YlenExtended, // sscratch
   0x141 => YlenExtended, // sepc
 
-  0x780 => YlenExtended, // mtid
-  0x580 => YlenExtended, // stid
-  0x480 => YlenExtended, // utid
+  0x780 => YlenNew, // mtid
+  0x580 => YlenNew, // stid
+  0x480 => YlenNew, // utid
 
   0x7bc => YlenNew, // dddc
   0x7bd => YlenNew, // dinfc
