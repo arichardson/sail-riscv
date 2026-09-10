@@ -15,7 +15,7 @@ function pte_permission_ok(
   ext     : option(PTE_Ext), // None() for Sv32.
   ext_ptw : ext_ptw,
 ) -> (bool, ext_ptw) = {
-  let non_cheri_page_fault = not(pte_rwxu_permission_ok(ac, priv, mxr, do_sum, pte));
+  let non_cheri_page_ok = pte_rwxu_permission_ok(ac, priv, mxr, do_sum, pte);
 
   var cheri_page_fault : option(CheriPageAccess) = None();
   var tagged_load_behaviour = TaggedLoadOk;
@@ -61,7 +61,7 @@ function pte_permission_ok(
     cheri_page_fault = cheri_page_fault
   };
 
-  (non_cheri_page_fault | (cheri_page_fault != None()), ext_ptw)
+  (non_cheri_page_ok & (cheri_page_fault == None()), ext_ptw)
 }
 
 // Update a PTE's A/D bits and write it to memory. This returns
