@@ -606,7 +606,7 @@ function clause execute (YSUNSEAL(rd, rs1, rs2)) = {
   let tag = rs1_cap.tag &
             new_cap.tag &
             not(capIsSealed(rs1_cap)) &
-            capIsSealed(new_cap) &
+            capIsSealed(rs2_cap) &
             capIsSubset(new_cap, rs1_cap); /* Subset checks for malformed bounds,
                                               perms, and reserved bits */
 
