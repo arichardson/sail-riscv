@@ -15,7 +15,8 @@ function pte_permission_ok(
   ext     : option(PTE_Ext), // None() for Sv32.
   ext_ptw : ext_ptw,
 ) -> (bool, ext_ptw) = {
-  let non_cheri_page_ok = pte_rwxu_permission_ok(ac, priv, mxr, do_sum, pte);
+  let non_cheri_page_ok = pte_rwxu_permission_ok(ac, priv, mxr, do_sum, pte)
+                        & (plat_enable_dirty_update() | ((pte[A] == 0b1) & (pte[D] == 0b1 | not(isWriteAc(ac))))) ;
 
   var cheri_page_fault : option(CheriPageAccess) = None();
   var tagged_load_behaviour = TaggedLoadOk;
