@@ -501,7 +501,7 @@ function test_cheri_invalid_addr() -> unit = {
     // If system has no invalid addresses, escape
     if (validAddr(invalidAddr)) then return ();
     // Since invalid addr checks are waived for infinite caps, make a slightly smaller cap
-    let (_, finite_cap) = setCapBounds(infinite_cap, zeros(), zero_extend(0xff00_0000_0000_0000));
+    let (_, finite_cap) = setCapBounds(infinite_cap, zeros(), zero_extend(0xff @ zeros(xlen - 8)));
     let infiniteR : regidx = Regidx(0b00001);
     let finiteR : regidx = Regidx(0b00010);
     let zeroR : regidx = Regidx(0b00000);
