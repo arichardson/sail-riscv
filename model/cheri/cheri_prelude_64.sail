@@ -72,7 +72,7 @@ type CapAP_P = bits(5)
 // checked for outside the function, and the null fields returned.
 // Backwards match failures occur when encoding an unrepresentable combination of fields: this should be
 // prevented by calling legalizeFields when changing the fields.
-mapping ap_p_encdec : bits(cap_AP_P_width) <-> (ArchPerms, Mode) = {
+mapping ap_p_encdec : bits(cap_AP_P_width) <-> (ArchPerms, PointerMode) = {
   // Quadrant 0: Non-capability data read/write
   0b00 @ 0b000     <-> (struct{ R=false, W=false, C=false, LM=false, EL=false, SL=false, X=false, ASR=false }, pointer_mode_encdec(0b0)),
   0b00 @ 0b001     <-> (struct{ R= true, W=false, C=false, LM=false, EL=false, SL=false, X=false, ASR=false }, pointer_mode_encdec(0b0)),
