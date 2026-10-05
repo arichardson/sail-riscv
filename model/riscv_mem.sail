@@ -193,7 +193,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
 }
 
 $ifdef RVFI_DII
-val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
+val rvfi_read : forall 'n, 'n > 0. (physaddrbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
 function rvfi_read (addr, width, result) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
   rvfi_mem_data_present = true;
@@ -207,7 +207,7 @@ function rvfi_read (addr, width, result) = {
   };
 }
 $else
-val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
+val rvfi_read : forall 'n, 'n > 0. (physaddrbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
 function rvfi_read (addr, width, result) = ()
 $endif
 
@@ -274,7 +274,7 @@ function mem_write_ea (addr, width, aq, rl, con) =
   else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
 
 $ifdef RVFI_DII
-val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
+val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (physaddrbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
 function rvfi_write (addr, width, value, meta, result) = {
   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
   rvfi_mem_data_present = true;
@@ -291,7 +291,7 @@ function rvfi_write (addr, width, value, meta, result) = {
   }
 }
 $else
-val rvfi_write : forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
+val rvfi_write : forall 'n, 'n > 0. (physaddrbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
 function rvfi_write (addr, width, value, meta, result) = ()
 $endif
 
