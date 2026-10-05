@@ -63,7 +63,7 @@ function ext_exc_type_of_bits(e) =
   }
 
 /* CHERI conversion of extension exceptions to integers */
-val num_of_ext_exc_type : ext_exc_type -> range(0, xlen - 1)
+val num_of_ext_exc_type : ext_exc_type -> range(0, 63)
 function num_of_ext_exc_type(e) =
   match e {
     EXC_CHERI(CapCheckType_Inst()) => 32,
