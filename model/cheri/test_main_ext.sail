@@ -246,9 +246,9 @@ function test_cheri_rounding() -> unit = {
     assert(Y(outR).tag);
     // Check that YBNDSWI doesn't assert with max requested len
     let _ = execute(YBNDSWI(outR, capR, ones()));
-    assert(Y(outR).tag);
+    assert(Y(outR).tag == (xlen == 64));
     let _ = execute(YBNDSWI(outR, capR, ones()));
-    assert(Y(outR).tag);
+    assert(Y(outR).tag == (xlen == 64));
 }
 
 function test_cheri_permission_encoding() -> unit = {
