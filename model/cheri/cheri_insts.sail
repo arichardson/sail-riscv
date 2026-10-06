@@ -90,7 +90,10 @@ function clause execute(JALR_capmode(imm, rs1, rd)) = {
 
     // Construct the new capability pointing to the address + offset.
     let (representable, newPCC) = setCapAddr(rs1_cap, newPC);
-    set_next_pcc(clearTagIf(unsealCap(newPCC), not(representable)));
+    let newPCC = clearTagIf(newPCC, not(representable));
+    // Unseal the target capability if permitted
+    let newPCC = if off == zeros() & rs1_cap.address[0] == bitzero then unsealCap(newPCC) else newPCC;
+    set_next_pcc(newPCC);
 
     RETIRE_SUCCESS
   }

@@ -650,7 +650,7 @@ function test_cheri_enables() -> unit = {
     test_cheri_mcre(false);
 }
 
-function test_cheri_oob_jump() -> unit = {
+function test_cheri_bad_jump() -> unit = {
     // Make a small cap
     let (_, finite_cap) = setCapBounds(root_cap, zeros(), zero_extend(0x100));
     let infiniteR : regidx = Regidx(0b00001);
@@ -695,7 +695,33 @@ function test_cheri_oob_jump() -> unit = {
     assert(not(PCC.tag));
     assert(fetch() == F_Ext_Error());
 
+    // Jump to sealed cap (0 imm) should succeed
+    Y(infiniteR) = sealCap(root_cap);
+    assert(execute(JALR_capmode(zeros(), infiniteR, zeroR)) == RETIRE_SUCCESS);
+    // Subsequent fetch should succeed
+    tick_pc();
+    assert(PCC.tag);
+    assert(not(PCC.sealed));
+    assert(fetch() != F_Ext_Error());
+
     PCC = root_cap;
+    // Jump to sealed cap (non-zero imm) should leave PCC sealed
+    assert(execute(JALR_capmode(0x010, infiniteR, zeroR)) == RETIRE_SUCCESS);
+    // Subsequent fetch must trap
+    tick_pc();
+    assert(PCC.tag);
+    assert(PCC.sealed);
+    assert(fetch() == F_Ext_Error());
+
+    PCC = root_cap;
+    // Jump to odd address sealed cap (any imm) should leave PCC sealed
+    Y(infiniteR) = sealCap({root_cap with address = zeros() @ 0b1});
+    assert(execute(JALR_capmode(0x000, infiniteR, zeroR)) == RETIRE_SUCCESS);
+    // Subsequent fetch must trap
+    tick_pc();
+    assert(PCC.tag);
+    assert(PCC.sealed);
+    assert(fetch() == F_Ext_Error());
 }
 
 function test_main_ext() -> unit = {
@@ -723,7 +749,7 @@ function test_main_ext() -> unit = {
     test_cheri_csr_access_control();
     test_cheri_malformed();
     test_cheri_invalid_addr();
-    test_cheri_oob_jump();
+    test_cheri_bad_jump();
     //test_cheri_enables(); Disable while cheri enables hardwired high
     print("CHERI tests passed\n");
 }
