@@ -72,8 +72,5 @@ function haveZstid () -> bool = true
 function legalize_epc_y(v : Capability) -> Capability = {
   let int_val = v.address;
   let legalized = legalize_xepc(int_val);
-
-  if   legalized == int_val
-  then v /* avoid possibly attempting to set the offset of a sentry */
-  else setCapAddrChecked(v, legalized)
+  setCapAddrChecked(v, legalized, true)
 }

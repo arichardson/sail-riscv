@@ -71,11 +71,7 @@ function prepare_xret_target(p : Privilege) -> xlenbits = {
                           };
 
   let aligned_addr = align_pc(epc_y.address);
-  /* Only call setCapAddrChecked() if the address actually changed to
-   * avoid invalidating sentries that already have the correct address */
-  let aligned_epc_y = if aligned_addr == epc_y.address
-                      then epc_y
-                      else setCapAddrChecked(epc_y, aligned_addr);
+  let aligned_epc_y = setCapAddrChecked(epc_y, aligned_addr, true);
   set_next_pcc(unsealCap(aligned_epc_y));
   /* Similar to prepare_trap_vector above we need to return the absolute address
     destined for PC, rather than the offset (architecutral PC) */
