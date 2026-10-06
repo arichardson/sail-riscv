@@ -663,7 +663,10 @@ function test_cheri_oob_jump() -> unit = {
 
     // In-bounds cap jump
     assert(execute(JALR_capmode(zeros(), infiniteR, zeroR)) == RETIRE_SUCCESS);
-    assert(execute(ITYPE (zeros(), zeroR, zeroR, RISCV_ADDI)) == RETIRE_SUCCESS);
+    // Subsequent fetch should succeed
+    tick_pc();
+    assert(PCC.tag);
+    assert(fetch() != F_Ext_Error());
 
     // Out-of-bounds cap jump
     // Jump itself should retire
