@@ -41,7 +41,7 @@ function tvec_y_vector_range_check(tvec: Capability) -> Capability = {
 function legalize_tvec_y(o : Capability, v : Capability) -> Capability = {
   let new_tvec = v.address;
   let legalized_tvec = legalize_tvec(Mk_Mtvec(o.address), new_tvec);
-  tvec_y_vector_range_check(setCapAddrChecked(v, legalized_tvec.bits))
+  tvec_y_vector_range_check(setCapAddrChecked(v, legalized_tvec.bits, false))
 }
 
 function get_mtvec() -> xlenbits = mtvec_y.address
@@ -71,11 +71,11 @@ function get_mscratch() -> xlenbits = mscratch_y.address
 function get_sscratch() -> xlenbits = sscratch_y.address
 
 function set_mscratch(value : xlenbits) -> unit = {
-  mscratch_y = setCapAddrChecked(mscratch_y, value);
+  mscratch_y = setCapAddrChecked(mscratch_y, value, false);
 }
 
 function set_sscratch(value : xlenbits) -> unit = {
-  sscratch_y = setCapAddrChecked(sscratch_y, value);
+  sscratch_y = setCapAddrChecked(sscratch_y, value, false);
 }
 
 function set_mscratch_y(value : Capability) -> unit = {
@@ -96,17 +96,11 @@ function get_sepc() -> xlenbits = align_pc(sepc_y.address)
 // This may clear the tag on read and cannot be done on write, since misa.C
 // can still change between the write and a later read (in which case bit 1
 // would report a different value).
-// Only call setCapAddrChecked() if the address actually changed to avoid
-// invalidating sentries that already have the correct address.
-function get_mepc_y() -> Capability = {
-  let aligned = align_pc(mepc_y.address);
-  if aligned == mepc_y.address then mepc_y else setCapAddrChecked(mepc_y, aligned)
-}
+function get_mepc_y() -> Capability =
+  setCapAddrChecked(mepc_y, align_pc(mepc_y.address), true)
 
-function get_sepc_y() -> Capability = {
-  let aligned = align_pc(sepc_y.address);
-  if aligned == sepc_y.address then sepc_y else setCapAddrChecked(sepc_y, aligned)
-}
+function get_sepc_y() -> Capability =
+  setCapAddrChecked(sepc_y, align_pc(sepc_y.address), true)
 
 function set_mepc(value : xlenbits) -> unit = {
   mepc_y = setCapCSRAddr(mepc_y, legalize_xepc(convertInvalidAddr(value)));
@@ -158,15 +152,15 @@ function set_utid_y(value : Capability) -> unit = {
 }
 
 function set_mtid(value : xlenbits) -> unit = {
-  mtid_y = setCapAddrChecked(mtid_y, value);
+  mtid_y = setCapAddrChecked(mtid_y, value, false);
 }
 
 function set_stid(value : xlenbits) -> unit = {
-  stid_y = setCapAddrChecked(stid_y, value);
+  stid_y = setCapAddrChecked(stid_y, value, false);
 }
 
 function set_utid(value : xlenbits) -> unit = {
-  utid_y = setCapAddrChecked(utid_y, value);
+  utid_y = setCapAddrChecked(utid_y, value, false);
 }
 
 /******************************* xenvcfg *******************************/

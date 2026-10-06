@@ -414,7 +414,7 @@ union clause instruction = YADDRW : (regidx, regidx, regidx)
  * rs1 or if rs1 is sealed.
  */
 function clause execute (YADDRW(rd, rs1, rs2)) = {
-  Y(rd) = setCapAddrChecked(Y(rs1), X(rs2));
+  Y(rd) = setCapAddrChecked(Y(rs1), X(rs2), false);
   RETIRE_SUCCESS
 }
 
