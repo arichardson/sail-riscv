@@ -763,7 +763,7 @@ function clause execute (LoadResCap(rd, rs1, aq, rl)) = {
           match c {
             Ok(v) => {
               if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
-                Translate_Exception(vaddr, E_Load_Page_Fault(), ext_ptw)
+                Translate_Exception(vaddr, E_Extension(EXC_CHERI(CapCheckType_Pte(CheriPage_Ld))), ext_ptw)
               } else {
                 load_reservation(bits_of_physaddr(addr));
                 let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
@@ -822,7 +822,7 @@ function clause execute LoadCapImm(rd, rs1, imm) = {
           match mem_read_cap(Read(Data), addr, pbmt, aq, aq & rl, false) {
             Ok(v) => {
               if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
-                Translate_Exception(vaddr, E_Load_Page_Fault(), ext_ptw)
+                Translate_Exception(vaddr, E_Extension(EXC_CHERI(CapCheckType_Pte(CheriPage_Ld))), ext_ptw)
               } else {
                 let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
                 Y(rd) = legalizeLoadedPermissions(cr, auth_val);
@@ -989,7 +989,7 @@ function clause execute AMOSwapCap(rd, rs2, rs1, aq, rl) = {
                   match mem_write_cap(addr, pbmt, rs2_cap, aq & rl, rl, false) {
                     Ok(_) => {
                       if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
-                        Translate_Exception(vaddr, E_Load_Page_Fault(), ext_ptw)
+                        Translate_Exception(vaddr, E_Extension(EXC_CHERI(CapCheckType_Pte(CheriPage_Ld))), ext_ptw)
                       } else {
                         let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
                         Y(rd) = legalizeLoadedPermissions(cr, auth_val);
