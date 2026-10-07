@@ -1141,8 +1141,8 @@ mapping clause encdec = LoadResCap(rd, rs1, aq, rl)                             
 mapping clause encdec = StoreCondCap(rd, rs2, rs1, aq, rl)                                                             if cheri_registers_enabled() & currentlyEnabled(Ext_Zalrsc) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode)
   <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled() & currentlyEnabled(Ext_Zalrsc) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode) /* sc.y */
 
-mapping clause encdec = AMOSwapCap(rd, rs2, rs1, aq, rl)                                                               if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo)
-  <-> 0b00001 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo) /* amoswap.y */
+mapping clause encdec = AMOSwapCap(rd, rs2, rs1, aq, rl)                                                               if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode)
+  <-> 0b00001 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled() & currentlyEnabled(Ext_Zaamo) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode) /* amoswap.y */
 
 mapping clause assembly = LoadResCap(rd, rs1, aq, rl)        <-> "lr.y"      ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
 mapping clause assembly = StoreCondCap(rd, rs2, rs1, aq, rl) <-> "sc.y"      ^ maybe_aqrl(aq, rl) ^ spc() ^ reg_name(rd)     ^ sep() ^ reg_name(rs2) ^ sep() ^ reg_name(rs1)
