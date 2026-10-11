@@ -30,7 +30,7 @@ function set_next_pc(pc) = {
 
 val tick_pc : unit -> unit
 function tick_pc() = {
-  PCC = setCapAddrChecked(nextPCC, nextPC, true);
+  PCC = setCapAddrChecked(nextPCC, nextPC, false);
   PC = nextPC;
   pc_write_callback(PC);
 }

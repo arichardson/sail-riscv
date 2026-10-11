@@ -726,7 +726,7 @@ function test_cheri_bad_jump() -> unit = {
     assert(execute(JALR_capmode(0x010, infiniteR, zeroR)) == RETIRE_SUCCESS);
     // Subsequent fetch must trap
     tick_pc();
-    assert(PCC.tag);
+    assert(not(PCC.tag));
     assert(PCC.sealed);
     assert(fetch() == F_Ext_Error());
 
@@ -736,7 +736,7 @@ function test_cheri_bad_jump() -> unit = {
     assert(execute(JALR_capmode(0x000, infiniteR, zeroR)) == RETIRE_SUCCESS);
     // Subsequent fetch must trap
     tick_pc();
-    assert(PCC.tag);
+    assert(not(PCC.tag));
     assert(PCC.sealed);
     assert(fetch() == F_Ext_Error());
 }
