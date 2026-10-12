@@ -1,0 +1,73 @@
+diff --git a/model/riscv_addr_checks.sail b/model/riscv_addr_checks.sail
+index 66c45c83e1b7bb4ad89d6e93943536a682db9253..c03ebbd4ddf910a924232f7473d21e473561d4bf 100644
+--- a/model/riscv_addr_checks.sail
++++ b/model/riscv_addr_checks.sail
+@@ -20,31 +20,6 @@ function ext_fetch_check_pc(start_pc : xlenbits, pc : xlenbits) -> Ext_FetchAddr
+ function ext_handle_fetch_check_error(err : ext_fetch_addr_error) -> unit =
+   ()
+ 
+-/* default control address checks */
+-
+-type ext_control_addr_error = unit
+-
+-/* these functions return the address to use as the target for
+- * the control transfer.  any address translation or other errors
+- * are reported for the original value, not the returned value.
+- *
+- * NOTE: the input value does *not* have bit[0] set to 0, to enable
+- * more accurate bounds checking.  There is no constraint on the output
+- * value, which will have bit[0] cleared by the caller if needed.
+- */
+-
+-/* the control address is derived from a non-PC register, e.g. in JALR */
+-function ext_control_check_addr(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
+-  Ext_ControlAddr_OK(Virtaddr(convertInvalidAddr(pc)))
+-
+-/* the control address is derived from the PC register, e.g. in JAL */
+-function ext_control_check_pc(pc : xlenbits) -> Ext_ControlAddr_Check(ext_control_addr_error) =
+-  Ext_ControlAddr_OK(Virtaddr(convertInvalidAddr(pc)))
+-
+-function ext_handle_control_check_error(err : ext_control_addr_error) -> unit =
+-  ()
+-
+-
+ /* The default data address function does not perform any checks so
+    just uses unit for error type. */
+ type ext_data_addr_error = unit
+diff --git a/model/riscv_inst_retire.sail b/model/riscv_inst_retire.sail
+index 7a8815c94f4f22fff61057f7324ac4b7909cfef2..0b73549f69a89e0229c9dd7047b701dd28975045 100644
+--- a/model/riscv_inst_retire.sail
++++ b/model/riscv_inst_retire.sail
+@@ -25,7 +25,6 @@ union ExecutionResult = {
+ 
+   // Did not retire for custom reason.
+   Ext_CSR_Check_Failure          : ext_csr_exc_type,
+-  Ext_ControlAddr_Check_Failure  : ext_control_addr_error,
+   Ext_DataAddr_Check_Failure     : ext_data_addr_error,
+   Ext_XRET_Priv_Failure          : unit,
+ }
+diff --git a/model/riscv_pc_access.sail b/model/riscv_pc_access.sail
+index 0ec880c33db5fce7fad44d4f4cb4ae3afcdef5b7..56621416f92c1df87335ebaece70bcb7c6beab23 100644
+--- a/model/riscv_pc_access.sail
++++ b/model/riscv_pc_access.sail
+@@ -30,7 +30,7 @@ function set_next_pc(pc) = {
+ 
+ val tick_pc : unit -> unit
+ function tick_pc() = {
+-  PCC = nextPCC;
++  PCC = setCapAddrChecked(nextPCC, nextPC);
+   PC = nextPC;
+   pc_write_callback(PC);
+ }
+diff --git a/model/riscv_step.sail b/model/riscv_step.sail
+index 57a56c79112093e36be9c765fb0a6be4c52acc20..e7f6dbb3ffc4d5cf8bd700cf1b0dd07b594fa201 100644
+--- a/model/riscv_step.sail
++++ b/model/riscv_step.sail
+@@ -203,7 +203,6 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
+     },
+     // errors from extensions
+     Step_Execute(Ext_CSR_Check_Failure(fail_type), _) => ext_check_CSR_fail(fail_type),
+-    Step_Execute(Ext_ControlAddr_Check_Failure(e), _) => ext_handle_control_check_error(e),
+     Step_Execute(Ext_DataAddr_Check_Failure(e), _) => ext_handle_data_check_error(e),
+     Step_Execute(Ext_XRET_Priv_Failure(), _) => ext_fail_xret_priv(),
+   };

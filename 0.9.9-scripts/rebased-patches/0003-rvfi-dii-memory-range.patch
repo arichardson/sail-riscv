@@ -1,0 +1,59 @@
+From dc8ec197dd151e3da6c3780c0373eafc3d4b3071 Mon Sep 17 00:00:00 2001
+From: Peter Rugg <pdr32@cam.ac.uk>
+Date: Tue, 7 Jan 2025 14:07:16 +0000
+Subject: [PATCH] Restore RVFI DII memory region restrictions
+
+Combination of the following commits: Capabilities-Limited/sail-riscv@dc8ec197,
+Capabilities-Limited/sail-riscv@cb6b63ae
+
+----
+
+Fix range checking wrap bug in RVFI memory range
+
+TestRIG found this surprisingly quickly... Accesses that wrapped
+the top of the address space would show up as being allowed in
+the RVFI region.
+
+(cherry picked from rvy-sail-cheri-riscv/sail-riscv commit dc8ec197dd151e3da6c3780c0373eafc3d4b3071)
+(squashed with rvy-sail-cheri-riscv/sail-riscv commit cb6b63ae29f4f19057e227f911e697db51f0baf8: Fix range checking wrap bug in RVFI memory range)
+---
+ model/riscv_mem.sail      | 5 ++++-
+ model/riscv_platform.sail | 3 +++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/model/riscv_mem.sail b/model/riscv_mem.sail
+index e9960538..bd093a29 100644
+--- a/model/riscv_mem.sail
++++ b/model/riscv_mem.sail
+@@ -86,6 +86,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
+     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
+     None()   => None()
+   }) : option((bits(8 * 'n), mem_meta));
++  let result : option((bits(8 * 'n), mem_meta)) = if get_config_rvfi() & out_of_rvfi_dii_range(paddr, width) then None() else result;
+   match (t, result) {
+     (InstructionFetch(), None()) => Err(E_Fetch_Access_Fault()),
+     (Read(Data), None()) => Err(E_Load_Access_Fault()),
+@@ -274,7 +275,9 @@ function mem_write_ea (addr, width, aq, rl, con) =
+ 
+ // only used for actual memory regions, to avoid MMIO effects
+ function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) =
+-  Ok(write_ram(wk, paddr, width, data, meta))
++  if get_config_rvfi() & out_of_rvfi_dii_range(paddr, width)
++  then Err(E_SAMO_Access_Fault())
++  else Ok(write_ram(wk, paddr, width, data, meta))
+ 
+ /* dispatches to MMIO regions or physical memory regions depending on physical memory map */
+ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
+diff --git a/model/riscv_platform.sail b/model/riscv_platform.sail
+index ba8f7405..60f67e33 100644
+--- a/model/riscv_platform.sail
++++ b/model/riscv_platform.sail
+@@ -537,3 +537,6 @@ function handle_illegal(instbits : instbits) -> unit = {
+ 
+ /* Platform-specific wait-for-interrupt */
+ function platform_wfi() -> unit = ()
++
++function out_of_rvfi_dii_range forall 'n, 0 < 'n <= max_mem_access . (Physaddr(paddr) : physaddr, width : int('n)) -> bool =
++  unsigned(paddr) < unsigned(0x80000000) | unsigned(paddr) + width > unsigned(0x80800000)
+-- 
+2.56.0

@@ -1,0 +1,37 @@
+diff --git a/model/CMakeLists.txt b/model/CMakeLists.txt
+index 6e76b02e..c2e1b361 100644
+--- a/model/CMakeLists.txt
++++ b/model/CMakeLists.txt
+@@ -170,7 +170,6 @@ foreach (xlen IN ITEMS 32 64)
+                 "riscv_sstc.sail"
+                 "cheri/cheri_sys_regs_types.sail"
+                 "cheri/cheri_sys_regs_envcfg.sail"
+-                "cheri/cheri_sys_regs_seccfg.sail"
+                 "cheri/cheri_sys_regs_xstatus.sail"
+                 "riscv_sys_regs.sail"
+                 "riscv_pmp_regs.sail"
+diff --git a/model/riscv_sys_regs.sail b/model/riscv_sys_regs.sail
+index 7dd1f20f..274aa2d6 100644
+--- a/model/riscv_sys_regs.sail
++++ b/model/riscv_sys_regs.sail
+@@ -343,9 +343,6 @@ function in32BitMode() -> bool = {
+ 
+ /* mseccfg */
+ 
+-/* whether Zkr was enabled at boot */
+-val sys_enable_zkr = pure "sys_enable_zkr" : unit -> bool
+-
+ bitfield Seccfg : bits(64) = {
+   // Enable access to SEED in S-mode
+   SSEED  : 9,
+@@ -359,8 +356,8 @@ function legalize_mseccfg(o : Seccfg, v : bits(64)) -> Seccfg = {
+   let v = Mk_Seccfg(v);
+   [
+     o with
+-    SSEED = if sys_enable_zkr() then v[SSEED] else 0b0,
+-    USEED = if sys_enable_zkr() then v[USEED] else 0b0,
++    SSEED = if extensionEnabled(Ext_Zkr) then v[SSEED] else 0b0,
++    USEED = if extensionEnabled(Ext_Zkr) then v[USEED] else 0b0,
+   ]
+ }
+ register mseccfg : Seccfg = legalize_mseccfg(Mk_Seccfg(zeros()), zeros())

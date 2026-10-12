@@ -1,0 +1,17 @@
+diff --git a/model/CMakeLists.txt b/model/CMakeLists.txt
+index c2e1b361..73a3519f 100644
+--- a/model/CMakeLists.txt
++++ b/model/CMakeLists.txt
+@@ -108,8 +108,11 @@ foreach (xlen IN ITEMS 32 64)
+                 "riscv_insts_begin.sail"
+                 ${sail_seq_inst}
+                 "riscv_insts_end.sail"
+-                "riscv_csr_end.sail"
+             )
++            if (variant STREQUAL "rvfi")
++                list(APPEND sail_seq_inst_srcs "cheri/cheri_csr_ext.sail")
++            endif()
++            list(APPEND sail_seq_inst_srcs "riscv_csr_end.sail")
+ 
+             set(sail_sys_srcs
+                 "riscv_vext_control.sail"

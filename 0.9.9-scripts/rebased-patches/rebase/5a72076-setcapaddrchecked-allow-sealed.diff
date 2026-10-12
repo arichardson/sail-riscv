@@ -1,0 +1,46 @@
+diff --git a/model/cheri/cheri_sys_regs_access.sail b/model/cheri/cheri_sys_regs_access.sail
+index be9dba7be2ef20b756ec76d0863bfd735c196138..f66720238367501eb43ee5e9ff66a2202040b0c4 100644
+--- a/model/cheri/cheri_sys_regs_access.sail
++++ b/model/cheri/cheri_sys_regs_access.sail
+@@ -96,17 +96,11 @@ function get_sepc() -> xlenbits = align_pc(sepc_y.address)
+ // This may clear the tag on read and cannot be done on write, since misa.C
+ // can still change between the write and a later read (in which case bit 1
+ // would report a different value).
+-// Only call setCapAddrChecked() if the address actually changed to avoid
+-// invalidating sentries that already have the correct address.
+-function get_mepc_y() -> Capability = {
+-  let aligned = align_pc(mepc_y.address);
+-  if aligned == mepc_y.address then mepc_y else setCapAddrChecked(mepc_y, aligned)
+-}
++function get_mepc_y() -> Capability =
++  setCapAddrChecked(mepc_y, align_pc(mepc_y.address), true)
+ 
+-function get_sepc_y() -> Capability = {
+-  let aligned = align_pc(sepc_y.address);
+-  if aligned == sepc_y.address then sepc_y else setCapAddrChecked(sepc_y, aligned)
+-}
++function get_sepc_y() -> Capability =
++  setCapAddrChecked(sepc_y, align_pc(sepc_y.address), true)
+ 
+ function set_mepc(value : xlenbits) -> unit = {
+   mepc_y = setCapCSRAddr(mepc_y, legalize_xepc(convertInvalidAddr(value)));
+diff --git a/model/riscv_pc_access.sail b/model/riscv_pc_access.sail
+index 56621416f92c1df87335ebaece70bcb7c6beab23..e1cf446e1fe48bd40c6b0ed08cca30edaaf47d82 100644
+--- a/model/riscv_pc_access.sail
++++ b/model/riscv_pc_access.sail
+@@ -30,7 +30,7 @@ function set_next_pc(pc) = {
+ 
+ val tick_pc : unit -> unit
+ function tick_pc() = {
+-  PCC = setCapAddrChecked(nextPCC, nextPC);
++  PCC = setCapAddrChecked(nextPCC, nextPC, true);
+   PC = nextPC;
+   pc_write_callback(PC);
+ }
+@@ -49,5 +49,5 @@ function set_next_pcc(pcc) = {
+ function force_pc(pc : bits(64)) -> unit = {
+   let addr = truncate(pc, xlen);
+   PC = addr;
+-  PCC = setCapAddrChecked(PCC, addr);
++  PCC = setCapAddrChecked(PCC, addr, false);
+ }

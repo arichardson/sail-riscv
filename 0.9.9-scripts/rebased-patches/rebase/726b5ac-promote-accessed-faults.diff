@@ -1,0 +1,13 @@
+diff --git a/model/cheri/cheri_vmem_pte_ext.sail b/model/cheri/cheri_vmem_pte_ext.sail
+index 8f83c9528a9bdec0ec002c6e715bd30bf80e9cd7..8b6a130098fdf408d49886d415577fd2fdaa56fd 100644
+--- a/model/cheri/cheri_vmem_pte_ext.sail
++++ b/model/cheri/cheri_vmem_pte_ext.sail
+@@ -16,7 +16,7 @@ function pte_permission_ok(
+   ext_ptw : ext_ptw,
+ ) -> (bool, ext_ptw) = {
+   let non_cheri_page_fault = not(pte_rwxu_permission_ok(ac, priv, mxr, do_sum, pte)) |
+-                             (not(plat_enable_dirty_update()) & ((pte[A] == 0b0) | (pte[D] == 0b0 & isWriteAc(ac))));
++                             (not(plat_enable_dirty_update) & ((pte[A] == 0b0) | (pte[D] == 0b0 & isWriteAc(ac))));
+ 
+   var cheri_page_fault : bool = false;
+   var tagged_load_behaviour = TaggedLoadOk;

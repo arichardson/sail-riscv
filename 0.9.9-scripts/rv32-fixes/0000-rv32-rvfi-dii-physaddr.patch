@@ -1,0 +1,66 @@
+From 42712f634e4a0151957a0c61ac1f52af4cb49498 Mon Sep 17 00:00:00 2001
+From: Alex Richardson <alexrichardson@google.com>
+Date: Mon, 5 Oct 2026 12:41:25 -0700
+Subject: [PATCH] Fix RV32 build of the RVFI memory range checks and reporting
+
+The RVFI DII memory range check and the RVFI read/write reporting take a
+physical address, which is wider than xlenbits on RV32 (34 bits).
+---
+ model/riscv_mem.sail      | 8 ++++----
+ model/riscv_platform.sail | 2 +-
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/model/riscv_mem.sail b/model/riscv_mem.sail
+index 972a826533dddcad0f01daead4bb8b1eb87dad30..c496f60c57e12c5d46eb838c261b6b8b96228a70 100644
+--- a/model/riscv_mem.sail
++++ b/model/riscv_mem.sail
+@@ -193,7 +193,7 @@ function phys_access_check forall 'n, 0 < 'n <= max_mem_access . (
+ }
+ 
+ $ifdef RVFI_DII
+-val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
++val rvfi_read : forall 'n, 'n > 0. (physaddrbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
+ function rvfi_read (addr, width, result) = {
+   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+   rvfi_mem_data_present = true;
+@@ -207,7 +207,7 @@ function rvfi_read (addr, width, result) = {
+   };
+ }
+ $else
+-val rvfi_read : forall 'n, 'n > 0. (xlenbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
++val rvfi_read : forall 'n, 'n > 0. (physaddrbits, int('n), MemoryOpResult((bits(8 * 'n), mem_meta))) -> unit
+ function rvfi_read (addr, width, result) = ()
+ $endif
+ 
+@@ -274,7 +274,7 @@ function mem_write_ea (addr, width, aq, rl, con) =
+   else Ok(write_ram_ea(write_kind_of_flags(aq, rl, con), addr, width))
+ 
+ $ifdef RVFI_DII
+-val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (xlenbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
++val rvfi_write : forall 'n, 0 < 'n <= max_mem_access . (physaddrbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
+ function rvfi_write (addr, width, value, meta, result) = {
+   rvfi_mem_data[rvfi_mem_addr] = zero_extend(addr);
+   rvfi_mem_data_present = true;
+@@ -291,7 +291,7 @@ function rvfi_write (addr, width, value, meta, result) = {
+   }
+ }
+ $else
+-val rvfi_write : forall 'n, 'n > 0. (xlenbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
++val rvfi_write : forall 'n, 'n > 0. (physaddrbits, int('n), bits(8 * 'n), mem_meta, MemoryOpResult(bool)) -> unit
+ function rvfi_write (addr, width, value, meta, result) = ()
+ $endif
+ 
+diff --git a/model/riscv_platform.sail b/model/riscv_platform.sail
+index 07e93fae1c7d5506f428004d0016b112d6465b07..71d9fd585512e1bac7c5c2d330304fb39e774af2 100644
+--- a/model/riscv_platform.sail
++++ b/model/riscv_platform.sail
+@@ -518,5 +518,5 @@ $else
+ function platform_get_rvfi_dii() -> bool = false
+ $endif
+ 
+-function out_of_rvfi_dii_range forall 'n, 0 < 'n <= max_mem_access . (paddr : xlenbits, width : int('n)) -> bool =
++function out_of_rvfi_dii_range forall 'n, 0 < 'n <= max_mem_access . (paddr : physaddrbits, width : int('n)) -> bool =
+   unsigned(paddr) < unsigned(0x80000000) | unsigned(paddr) + width > unsigned(0x80800000)
+-- 
+2.56.0.rc1.315.gc6ed9934b7-goog
+

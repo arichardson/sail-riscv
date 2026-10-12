@@ -1,0 +1,50 @@
+From dbda78ef321a962d1061cf73c78e0b1acd24ace3 Mon Sep 17 00:00:00 2001
+From: Alex Richardson <alexrichardson@google.com>
+Date: Wed, 7 Oct 2026 05:24:00 -0700
+Subject: [PATCH 1/2] Fix TaggedLoadTrap to raise CHERI load page fault
+ exception
+
+When ab305566 ("Update to new CHERI fault reporting") removed the third
+argument `{ ext_ptw with cheri_page_fault = PageFault_Cheri }` from
+`handle_translate_exception`, the three `TaggedLoadTrap` sites in
+`LoadResCap`, `LoadCapImm`, and `AMOSwapCap` were left passing
+`E_Load_Page_Fault()` instead of
+`E_Extension(EXC_CHERI(CapCheckType_Pte(CheriPage_Ld)))`.
+---
+ src/cheri_insts.sail | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/cheri_insts.sail b/src/cheri_insts.sail
+index a4a934f..e55e6cc 100644
+--- a/src/cheri_insts.sail
++++ b/src/cheri_insts.sail
+@@ -766,7 +766,7 @@ function clause execute (LoadResCap(rd, rs1, aq, rl)) = {
+           match c {
+             Ok(v) => {
+               if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
+-                handle_translate_exception(vaddr, E_Load_Page_Fault());
++                handle_translate_exception(vaddr, E_Extension(EXC_CHERI(CapCheckType_Pte(CheriPage_Ld))));
+                 RETIRE_FAIL
+               } else {
+                 load_reservation(physaddr_bits(addr));
+@@ -829,7 +829,7 @@ function clause execute LoadCapImm(rd, rs1, imm) = {
+           match mem_read_cap(addr, pbmt, aq, aq & rl, false) {
+             Ok(v) => {
+               if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
+-                handle_translate_exception(vaddr, E_Load_Page_Fault());
++                handle_translate_exception(vaddr, E_Extension(EXC_CHERI(CapCheckType_Pte(CheriPage_Ld))));
+                 RETIRE_FAIL
+               } else {
+                 let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
+@@ -999,7 +999,7 @@ function clause execute AMOSwapCap(rd, rs2, rs1, aq, rl) = {
+                   match mem_write_cap(addr, pbmt, rs2_cap, aq & rl, rl, false) {
+                     Ok(_) => {
+                       if v.tag & ext_ptw.tagged_load_behaviour == TaggedLoadTrap then {
+-                        handle_translate_exception(vaddr, E_Load_Page_Fault());
++                        handle_translate_exception(vaddr, E_Extension(EXC_CHERI(CapCheckType_Pte(CheriPage_Ld))));
+                         RETIRE_FAIL
+                       } else {
+                         let cr = clearTagIf(v, ext_ptw.tagged_load_behaviour == TaggedLoadClear | not(canC(auth_val)));
+-- 
+2.56.0.360.g66cac248cb-goog
+

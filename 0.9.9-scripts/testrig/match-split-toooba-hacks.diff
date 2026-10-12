@@ -1,0 +1,78 @@
+diff --git a/model/cheri/cheri_step_ext.sail b/model/cheri/cheri_step_ext.sail
+index d896c0a2..2c42c52a 100644
+--- a/model/cheri/cheri_step_ext.sail
++++ b/model/cheri/cheri_step_ext.sail
+@@ -35,6 +35,9 @@ function ext_reset_cheri() -> unit = {
+     let c = rX_full(r);
+     wX_full(r, bitsToCap(false, capToMetadataBits(c) @ c.address));
+   };
++
++  menvcfg[Y] = 0b1;
++  senvcfg[Y] = 0b1;
+ }
+ 
+ function ext_reset() -> unit = {
+diff --git a/model/cheri/cheri_sys_regs_envcfg.sail b/model/cheri/cheri_sys_regs_envcfg.sail
+index 41cdfbcc..765f4613 100644
+--- a/model/cheri/cheri_sys_regs_envcfg.sail
++++ b/model/cheri/cheri_sys_regs_envcfg.sail
+@@ -7,12 +7,13 @@ function legalize_menvcfg(o : MEnvcfg, v : bits(64)) -> MEnvcfg = {
+   let v = Mk_MEnvcfg(v);
+   [o with
+     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
+-    STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
++    /* STCE = if currentlyEnabled(Ext_Sstc) then v[STCE] else 0b0,
+     CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
+     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
+     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+     PBMTE = if sys_enable_pbmt() then v[PBMTE] else 0b0,
+-    Y = v[Y],
++    Y = v[Y], */
++    Y = 0b1,
+     // Other extensions are not implemented yet so all other fields are read only zero.
+   ]
+ }
+@@ -21,10 +22,11 @@ function legalize_senvcfg(o : SEnvcfg, v : xlenbits) -> SEnvcfg = {
+   let v = Mk_SEnvcfg(v);
+   [o with
+     FIOM = if sys_enable_writable_fiom then v[FIOM] else 0b0,
+-    CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
++    /* CBZE = if currentlyEnabled(Ext_Zicboz) then v[CBZE] else 0b0,
+     CBCFE = if currentlyEnabled(Ext_Zicbom) then v[CBCFE] else 0b0,
+     CBIE = if currentlyEnabled(Ext_Zicbom) then (if v[CBIE] != 0b10 then v[CBIE] else 0b00) else 0b00,
+-    Y = v[Y],
++    Y = v[Y], */
++    Y = 0b1,
+     // Other extensions are not implemented yet so all other fields are read only zero.
+   ]
+ }
+diff --git a/model/riscv_sys_regs.sail b/model/riscv_sys_regs.sail
+index 8837ed7f..d287e4e5 100644
+--- a/model/riscv_sys_regs.sail
++++ b/model/riscv_sys_regs.sail
+@@ -536,12 +536,10 @@ bitfield Mtvec : xlenbits = {
+ register mtvec : Mtvec  /* Trap Vector */
+ 
+ function legalize_tvec(o : Mtvec, v : xlenbits) -> Mtvec = {
+- let v = Mk_Mtvec(v);
+- match trapVectorMode_bits(v[Mode]) {
+-   TV_Direct => v,
+-   TV_Vector => v,
+-   _         => [v with Mode = o[Mode]]
+- }
++ // CVA6 behaviour: use v[0] to decide if vectored
++ let vectored = v[0] == bitone;
++ if vectored then [Mk_Mtvec(zeros()) with Base = v[(xlen - 1)..8] @ zeros(6), Mode = 0b01]
++             else [Mk_Mtvec(zeros()) with Base = v[(xlen - 1)..2], Mode = 0b00]
+ }
+ 
+ bitfield Mcause : xlenbits = {
+diff --git a/c_emulator/riscv_platform.cpp b/c_emulator/riscv_platform.cpp
+--- a/c_emulator/riscv_platform.cpp
++++ b/c_emulator/riscv_platform.cpp
+@@ -234,5 +234,5 @@ bool sys_misa_x(unit u)
+ mach_bits sys_pa_bits(unit u)
+ {
+-  return (zxlen == 32) ? 34 : 56;
++  return (zxlen == 32) ? 34 : 39;
+ }

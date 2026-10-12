@@ -1,0 +1,54 @@
+diff --git a/model/riscv_callbacks.sail b/model/riscv_callbacks.sail
+index 4b75c1c78fcc7d920d31fe8a6ebc9961c0a30ef4..28b095c2a6e1069709367d4d182a2041d2c12945 100644
+--- a/model/riscv_callbacks.sail
++++ b/model/riscv_callbacks.sail
+@@ -13,7 +13,7 @@ function mem_write_callback(_) = ()
+ val mem_read_callback = pure {c: "mem_read_callback"} : forall 'n, 0 < 'n <= max_mem_access . (/* access type */ string, /* addr */ physaddrbits, /* width */ int('n), /* value */ bits(8 * 'n)) -> unit
+ function mem_read_callback(_) = ()
+ 
+-val mem_exception_callback = pure {c: "mem_exception_callback"} : forall 'n, 0 <= 'n < xlen . (/* addr */ physaddrbits, /* num_of_ExceptionType */ int('n)) -> unit
++val mem_exception_callback = pure {c: "mem_exception_callback"} : forall 'n, 0 <= 'n < 64 . (/* addr */ physaddrbits, /* num_of_ExceptionType */ int('n)) -> unit
+ function mem_exception_callback(_) = ()
+ 
+ val pc_write_callback = pure {c: "pc_write_callback"} : xlenbits -> unit
+diff --git a/model/riscv_inst_retire.sail b/model/riscv_inst_retire.sail
+index 0b73549f69a89e0229c9dd7047b701dd28975045..cbf51aa337171d21567b9e2aba04c642f69b166a 100644
+--- a/model/riscv_inst_retire.sail
++++ b/model/riscv_inst_retire.sail
+@@ -21,7 +21,7 @@ union ExecutionResult = {
+   Trap                           : (Privilege, ctl_result, xlenbits),
+   Memory_Exception               : (virtaddr, ExceptionType),
+   Translate_Exception            : (virtaddr, ExceptionType, ext_ptw),
+-  CHERI_Exception                : (CapCheckType, CapEx, virtaddr),
++  CHERI_Exception                : (CapCheckType, virtaddr),
+ 
+   // Did not retire for custom reason.
+   Ext_CSR_Check_Failure          : ext_csr_exc_type,
+diff --git a/model/riscv_step.sail b/model/riscv_step.sail
+index e7f6dbb3ffc4d5cf8bd700cf1b0dd07b594fa201..d3136d317f524cac6ff647af55f02cc2fb0c490c 100644
+--- a/model/riscv_step.sail
++++ b/model/riscv_step.sail
+@@ -187,8 +187,8 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
+     Step_Execute(Trap(priv, ctl, pc), _) => set_next_pc(exception_handler(priv, ctl, pc)),
+     Step_Execute(Memory_Exception(vaddr, e), _) => handle_mem_exception(vaddr, e),
+     Step_Execute(Illegal_Instruction(), instbits) => handle_illegal(instbits),
+-    Step_Execute(Translate_Exception(vaddr, exc, ext_ptw), _) => handle_translate_exception(vaddr, exc, ext_ptw),
+-    Step_Execute(CHERI_Exception(ty, exc, vaddr), _) => handle_cheri_exception(ty, exc, vaddr),
++    Step_Execute(Translate_Exception(vaddr, exc, ext_ptw), _) => handle_translate_exception(vaddr, exc),
++    Step_Execute(CHERI_Exception(ty, vaddr), _) => handle_cheri_exception(ty, vaddr),
+     Step_Execute(Enter_Wait(wr), instbits) => {
+       if wait_is_nop(wr) then {
+         // This is the same as the RETIRE_OK case.
+diff --git a/model/riscv_types_ext.sail b/model/riscv_types_ext.sail
+index 3d4c58b14104cea8357817e504f437db831de9e1..6ef08f390af97cf5cb0ea65bc80b0d128f448ba3 100644
+--- a/model/riscv_types_ext.sail
++++ b/model/riscv_types_ext.sail
+@@ -46,7 +46,7 @@ val ext_exc_type_of_bits : exc_code -> ext_exc_type
+ function ext_exc_type_of_bits(e) = internal_error(__FILE__, __LINE__, "unknown exception type")
+ 
+ /* Default conversion of extension exceptions to integers */
+-val num_of_ext_exc_type : ext_exc_type -> range(0, xlen - 1)
++val num_of_ext_exc_type : ext_exc_type -> range(0, 63)
+ function num_of_ext_exc_type(e) = 24 /* First code for a custom extension */
+ 
+ /* Default conversion of extension exceptions to strings */

@@ -1,0 +1,81 @@
+diff --git a/model/CMakeLists.txt b/model/CMakeLists.txt
+index 9f52059d..6e76b02e 100644
+--- a/model/CMakeLists.txt
++++ b/model/CMakeLists.txt
+@@ -202,10 +202,10 @@ foreach (xlen IN ITEMS 32 64)
+             )
+ 
+             if (variant STREQUAL "rvfi")
+-                set(riscv_step_ext "riscv_step_rvfi.sail")
++                set(riscv_step_ext "cheri/cheri_step_ext.sail" "riscv_step_rvfi.sail")
+                 set(riscv_fetch "riscv_fetch_rvfi.sail")
+             else()
+-                set(riscv_step_ext "cheri/cheri_step_ext.sail")
++                set(riscv_step_ext "cheri/cheri_step_ext.sail" "cheri/cheri_step_ext_nonrvfi.sail")
+                 set(riscv_fetch "riscv_fetch.sail")
+             endif()
+ 
+diff --git a/model/cheri/cheri_step_ext_nonrvfi.sail b/model/cheri/cheri_step_ext_nonrvfi.sail
+new file mode 100644
+index 00000000..52806ada
+--- /dev/null
++++ b/model/cheri/cheri_step_ext_nonrvfi.sail
+@@ -0,0 +1,19 @@
++/*=======================================================================================*/
++/*  This Sail RISC-V architecture model, comprising all files and                        */
++/*  directories except where otherwise noted is subject the BSD                          */
++/*  two-clause license in the LICENSE file.                                              */
++/*                                                                                       */
++/*  SPDX-License-Identifier: BSD-2-Clause                                                */
++/*=======================================================================================*/
++
++// The split repository (rvy-sail-cheri-riscv) could only build the RVFI simulator between
++// "Fixes for running with TestRIG" and "Re-enable self tests". These definitions keep the
++// non-RVFI build of the merged repository working in the meantime; "Re-enable self tests"
++// removes the step hooks and this file.
++
++function ext_fetch_hook(f : FetchResult) -> FetchResult = f
++
++function ext_pre_step_hook()  -> unit = ()
++function ext_post_step_hook() -> unit = ()
++
++function ext_reset() -> unit = ext_cheri_reset()
+diff --git a/model/riscv_step_rvfi.sail b/model/riscv_step_rvfi.sail
+index e5485696..d07dcdb0 100644
+--- a/model/riscv_step_rvfi.sail
++++ b/model/riscv_step_rvfi.sail
+@@ -17,22 +17,4 @@ function ext_post_step_hook() -> unit = {
+   rvfi_pc_data[rvfi_pc_wdata] = zero_extend(get_arch_pc())
+ }
+ 
+-// Print an instruction we are executing. For CHERI we print the mode too.
+-function ext_print_instr forall 'n, 'n in {16, 32} . (
+-  step_no : int, ast : ast, opcode : bits('n)
+-) -> unit = {
+-  if get_config_print_instr()
+-  then {
+-    let cheri_mode : string = match effective_cheri_mode() {
+-      CapPtrMode => "CapPtrMode",
+-      IntPtrMode  => "Integer",
+-    };
+-    print_instr(
+-      "[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege()) ^ "," ^ cheri_mode ^ "]: " ^
+-      BitStr(PC) ^ " (" ^ BitStr(opcode) ^ ") " ^ to_str(ast)
+-    );
+-  };
+-}
+-
+ function ext_reset() -> unit = ext_rvfi_reset()
+-function ext_reset_misa() -> unit = ()
+diff --git a/Makefile b/Makefile
+index d957bce8..fe11ca59 100644
+--- a/Makefile
++++ b/Makefile
+@@ -154,6 +154,7 @@ SAIL_ARCH_RVFI_SRCS = \
+ 
+ SAIL_STEP_SRCS = $(SAIL_RISCV_MODEL_DIR)/riscv_step_common.sail \
+                  $(SAIL_CHERI_MODEL_DIR)/cheri_step_ext.sail \
++                 $(SAIL_CHERI_MODEL_DIR)/cheri_step_ext_nonrvfi.sail \
+                  $(SAIL_CHERI_MODEL_DIR)/cheri_decode_ext.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/riscv_fetch.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/riscv_step.sail

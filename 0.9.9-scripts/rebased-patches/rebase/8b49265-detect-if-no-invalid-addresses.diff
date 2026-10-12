@@ -1,0 +1,13 @@
+diff --git a/model/cheri/test_main_ext.sail b/model/cheri/test_main_ext.sail
+index aa7ec619d8e1c185157097ea0bade512559b02fc..ed62deef2ef0c6e3a0de5ccc6d02510ff666d15d 100644
+--- a/model/cheri/test_main_ext.sail
++++ b/model/cheri/test_main_ext.sail
+@@ -501,7 +501,7 @@ function test_cheri_invalid_addr() -> unit = {
+     // If system has no invalid addresses, escape
+     if (validAddr(invalidAddr)) then return ();
+     // Since invalid addr checks are waived for infinite caps, make a slightly smaller cap
+-    let (_, finite_cap) = setCapBounds(infinite_cap, zeros(), zero_extend(0xff @ zeros(xlen - 8)));
++    let (_, finite_cap) = setCapBounds(infinite_cap, zeros(), 0b0 @ 0xff @ zeros(xlen - 8));
+     let infiniteR : regidx = Regidx(0b00001);
+     let finiteR : regidx = Regidx(0b00010);
+     let zeroR : regidx = Regidx(0b00000);

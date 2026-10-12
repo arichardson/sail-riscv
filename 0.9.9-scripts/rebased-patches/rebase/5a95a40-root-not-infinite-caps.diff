@@ -1,0 +1,26 @@
+diff --git a/model/cheri/cheri_prelude_xlen.sail b/model/cheri/cheri_prelude_xlen.sail
+index 58a50a3fa3c39e4fa520c2319f55e9d4897aac9a..73ed669328bc20863d7e23aab7d0de736902fa62 100644
+--- a/model/cheri/cheri_prelude_xlen.sail
++++ b/model/cheri/cheri_prelude_xlen.sail
+@@ -152,7 +152,7 @@ function ap_m_valid_bits(ap_m) = {
+ }
+ 
+ let null_ap_m : bits(cap_AP_M_width) = if xlen == 32 then 0b00000 else 0b000000000
+-let infinite_ap_m : bits(cap_AP_M_width) = if xlen == 32 then 0b01001 else 0b111111111
++let root_ap_m : bits(cap_AP_M_width) = if xlen == 32 then 0b01001 else 0b111111111
+ 
+ // Perform the XLEN-specific ACPERMS legalization.
+ function legalizePermsAndMode(perms : ArchPerms, mode : ExecutionMode) -> (ArchPerms, ExecutionMode) = {
+diff --git a/model/cheri/cheri_regs.sail b/model/cheri/cheri_regs.sail
+index 3d0812f4ad83bf542c1395ef5160fa86c3b70263..cf9924ef8dafc529b89bb34aa4e420eadf5d21ff 100644
+--- a/model/cheri/cheri_regs.sail
++++ b/model/cheri/cheri_regs.sail
+@@ -32,7 +32,7 @@ overload Y = {rY_bits, wY_bits, rY, wY}
+  */
+ val ext_rvfi_reset : unit -> unit
+ function ext_rvfi_reset () = {
+-  foreach (i from 1 to 31) wX_full(Regno(i), infinite_cap);
++  foreach (i from 1 to 31) wX_full(Regno(i), root_cap);
+ }
+ 
+ // Implementations are allowed to choose whether to clear the tag

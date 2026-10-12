@@ -1,0 +1,89 @@
+From 7d30438477a6e5ace725e80f5978325710669645 Mon Sep 17 00:00:00 2001
+From: Alex Richardson <alexrichardson@google.com>
+Date: Wed, 7 Oct 2026 05:24:00 -0700
+Subject: [PATCH 2/2] Fix AMOSwapCap to reserve rs1=zreg in CapPtrMode
+
+Like LoadCapImm (ly), StoreCapImm (sy), LoadResCap (lr.y), and
+StoreCondCap (sc.y), AMOSwapCap (amoswap.y) reserves encodings with
+rs1=zreg in CapPtrMode while allowing rs1=zreg in IntPtrMode (see
+riscv/riscv-cheri@8e6d67ed, riscv/riscv-cheri@0f249b68, and
+riscv/riscv-cheri@e919dab5).
+
+Add `& (rs1 != zreg | effective_cheri_mode() == IntPtrMode)` to the
+AMOSwapCap encdec mapping and add a self-test checking that rs1=zreg
+encodings of ly, sy, lr.y, sc.y, and amoswap.y trap with an illegal
+instruction exception in CapPtrMode.
+---
+ src/cheri_insts.sail   |  4 ++--
+ src/test_main_ext.sail | 33 +++++++++++++++++++++++++++++++++
+ 2 files changed, 35 insertions(+), 2 deletions(-)
+
+diff --git a/src/cheri_insts.sail b/src/cheri_insts.sail
+index e55e6cc..2756aa1 100644
+--- a/src/cheri_insts.sail
++++ b/src/cheri_insts.sail
+@@ -1155,8 +1155,8 @@ mapping clause encdec = LoadResCap(rd, rs1, aq, rl)
+ mapping clause encdec = StoreCondCap(rd, rs2, rs1, aq, rl)                                                             if cheri_registers_enabled() & extensionEnabled(Ext_Zalrsc) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode)
+   <-> 0b00011 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled() & extensionEnabled(Ext_Zalrsc) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode) /* sc.y */
+ 
+-mapping clause encdec = AMOSwapCap(rd, rs2, rs1, aq, rl)                                                               if cheri_registers_enabled() & extensionEnabled(Ext_Zaamo)
+-  <-> 0b00001 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled() & extensionEnabled(Ext_Zaamo) /* amoswap.y */
++mapping clause encdec = AMOSwapCap(rd, rs2, rs1, aq, rl)                                                               if cheri_registers_enabled() & extensionEnabled(Ext_Zaamo) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode)
++  <-> 0b00001 @ bool_bits(aq) @ bool_bits(rl) @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b011 @ encdec_reg(rd) @ 0b1111011 if cheri_registers_enabled() & extensionEnabled(Ext_Zaamo) & (rs1 != zreg | effective_cheri_mode() == IntPtrMode) /* amoswap.y */
+ 
+ mapping clause assembly = LoadResCap(rd, rs1, aq, rl)        <-> "lr.y"      ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd) ^ sep() ^ reg_name(rs1)
+ mapping clause assembly = StoreCondCap(rd, rs2, rs1, aq, rl) <-> "sc.y"      ^ maybe_aq(aq) ^ maybe_rl(rl) ^ spc() ^ reg_name(rd)     ^ sep() ^ reg_name(rs2) ^ sep() ^ reg_name(rs1)
+diff --git a/src/test_main_ext.sail b/src/test_main_ext.sail
+index 1b6a7ed..740f253 100644
+--- a/src/test_main_ext.sail
++++ b/src/test_main_ext.sail
+@@ -625,6 +625,38 @@ function test_cheri_reserved_branches() -> unit = {
+     assert_illegal_cause();
+ }
+ 
++function test_cheri_reserved_load_store() -> unit = {
++    let dstR : regidx = Regidx(0b00001);
++    let srcR : regidx = Regidx(0b00010);
++    // Encode with rs1 = zreg in IntPtrMode where rs1 = zreg is permitted
++    PCC = {setCapMode(PCC, IntPtrMode)};
++    let instBitsLY = encdec(LoadCapImm(dstR, zreg, zeros()));
++    let instBitsSY = encdec(StoreCapImm(srcR, zreg, zeros()));
++    // Check that CapPtrMode reserves rs1 = zreg for capability loads/stores/AMOs
++    PCC = {setCapMode(PCC, CapPtrMode)};
++    assert(execute(ext_decode(instBitsLY)) == RETIRE_FAIL);
++    assert_illegal_cause();
++    assert(execute(ext_decode(instBitsSY)) == RETIRE_FAIL);
++    assert_illegal_cause();
++    if extensionEnabled(Ext_Zalrsc) then {
++        PCC = {setCapMode(PCC, IntPtrMode)};
++        let instBitsLRY = encdec(LoadResCap(dstR, zreg, false, false));
++        let instBitsSCY = encdec(StoreCondCap(dstR, srcR, zreg, false, false));
++        PCC = {setCapMode(PCC, CapPtrMode)};
++        assert(execute(ext_decode(instBitsLRY)) == RETIRE_FAIL);
++        assert_illegal_cause();
++        assert(execute(ext_decode(instBitsSCY)) == RETIRE_FAIL);
++        assert_illegal_cause();
++    };
++    if extensionEnabled(Ext_Zaamo) then {
++        PCC = {setCapMode(PCC, IntPtrMode)};
++        let instBitsAMOSWAPY = encdec(AMOSwapCap(dstR, srcR, zreg, false, false));
++        PCC = {setCapMode(PCC, CapPtrMode)};
++        assert(execute(ext_decode(instBitsAMOSWAPY)) == RETIRE_FAIL);
++        assert_illegal_cause();
++    };
++}
++
+ function test_cheri_scre(cheri_allowed : bool) -> unit = {
+     set_senvcfg(update_Y(senvcfg, 0b1).bits);
+     test_cheri_pcc_mode(User, cheri_allowed);
+@@ -742,6 +774,7 @@ function test_main_ext() -> unit = {
+     test_cheri_l8();
+     test_cheri_redundant();
+     test_cheri_reserved_branches();
++    test_cheri_reserved_load_store();
+     test_cheri_rounding();
+     test_cheri_permission_encoding();
+     test_cheri_circular();
+-- 
+2.56.0.360.g66cac248cb-goog
+

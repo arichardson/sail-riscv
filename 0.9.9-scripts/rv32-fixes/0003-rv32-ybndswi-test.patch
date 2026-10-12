@@ -1,0 +1,30 @@
+From 6cdb63eeac9e2b0f02eafe6b377ccc29625de9d4 Mon Sep 17 00:00:00 2001
+From: Alex Richardson <alexrichardson@google.com>
+Date: Mon, 5 Oct 2026 12:41:28 -0700
+Subject: [PATCH] Fix the YBNDSWI max length self test on RV32
+
+On RV32 the bounds requested with the maximum length are not representable,
+so the result is untagged.
+---
+ model/cheri/test_main_ext.sail | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/model/cheri/test_main_ext.sail b/model/cheri/test_main_ext.sail
+index 7bc02a20d235ffc40d60b88213f3227682f8a254..13f0f86181ae54d9cf48b0735ddbab2bf7fc5cff 100644
+--- a/model/cheri/test_main_ext.sail
++++ b/model/cheri/test_main_ext.sail
+@@ -246,9 +246,9 @@ function test_cheri_rounding() -> unit = {
+     assert(Y(outR).tag);
+     // Check that YBNDSWI doesn't assert with max requested len
+     let _ = execute(YBNDSWI(outR, capR, ones()));
+-    assert(Y(outR).tag);
++    assert(Y(outR).tag == (xlen == 64));
+     let _ = execute(YBNDSWI(outR, capR, ones()));
+-    assert(Y(outR).tag);
++    assert(Y(outR).tag == (xlen == 64));
+ }
+ 
+ function test_cheri_permission_encoding() -> unit = {
+-- 
+2.56.0.rc1.315.gc6ed9934b7-goog
+

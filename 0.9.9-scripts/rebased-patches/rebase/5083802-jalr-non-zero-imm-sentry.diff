@@ -1,0 +1,12 @@
+diff --git a/model/riscv_pc_access.sail b/model/riscv_pc_access.sail
+--- a/model/riscv_pc_access.sail
++++ b/model/riscv_pc_access.sail
+@@ -30,7 +30,7 @@ function set_next_pc(pc) = {
+ 
+ val tick_pc : unit -> unit
+ function tick_pc() = {
+-  PCC = setCapAddrChecked(nextPCC, nextPC, true);
++  PCC = setCapAddrChecked(nextPCC, nextPC, false);
+   PC = nextPC;
+   pc_write_callback(PC);
+ }

@@ -1,0 +1,64 @@
+From 63661df518d18ae71b117245775373b9b21e5a3b Mon Sep 17 00:00:00 2001
+From: Jordan Carlin <jordanmcarlin@gmail.com>
+Date: Wed, 9 Jul 2025 07:57:52 -0700
+Subject: [PATCH] Fix encoding for `ZBA_RTYPEUW` (#1132, #1712)
+
+PR #1119 broke `sh#add.uw` instruction decoding. This splits the
+`encdec` clauses for `add.uw` and `sh#add.uw` to handle the different
+opcodes, and guards against the reserved `shamt == 0b00` encoding on
+`0b0010000` (#1712). Also apply the same fix to `ZBA_RTYPEUW_capmode`
+in `model/cheri/cheri_insts_zba.sail`.
+
+(cherry picked from commit 63661df518d18ae71b117245775373b9b21e5a3b)
+(squashed with commit 356428fa67a8a44164a158231d4bd569fc4e7a0b: Guard against a reserved shamt encoding that aliased with `add.uw`. (#1712))
+---
+ model/cheri/cheri_insts_zba.sail | 8 +++++++-
+ model/riscv_insts_zba.sail       | 8 +++++++-
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/model/cheri/cheri_insts_zba.sail b/model/cheri/cheri_insts_zba.sail
+index bead109f..5f9e0a6e 100644
+--- a/model/cheri/cheri_insts_zba.sail
++++ b/model/cheri/cheri_insts_zba.sail
+@@ -9,9 +9,15 @@
+ /* ****************************************************************** */
+ union clause instruction = ZBA_RTYPEUW_capmode : (regidx, regidx, regidx, shamt_zba)
+ 
++// add.uw
++mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, 0b00)
++  <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ 0b00 @ 0b0 @ encdec_reg(cd) @ 0b0111011
++  when currentlyEnabled(Ext_Zba) & xlen == 64
++
++// sh#add.uw
+ mapping clause encdec_capmode = ZBA_RTYPEUW_capmode(cs2, rs1, cd, shamt)
+-  <-> 0b0000100 @ encdec_reg(cs2) @ encdec_reg(rs1) @ shamt @ 0b0 @ encdec_reg(cd) @ 0b0111011
+-  when currentlyEnabled(Ext_Zba) & xlen == 64
++  <-> 0b0010000 @ encdec_reg(cs2) @ encdec_reg(rs1) @ shamt @ 0b0 @ encdec_reg(cd) @ 0b0111011
++  when currentlyEnabled(Ext_Zba) & xlen == 64 & shamt != 0b00
+ 
+ mapping clause assembly = ZBA_RTYPEUW_capmode(cs2, rs1, cd, shamt)
+   <-> zba_rtypeuw_mnemonic(shamt) ^ spc() ^ cap_reg_name(cd) ^ sep() ^ reg_name(rs1) ^ sep() ^ cap_reg_name(cs2)
+diff --git a/model/riscv_insts_zba.sail b/model/riscv_insts_zba.sail
+index 7b4ced2f..561fa0bd 100644
+--- a/model/riscv_insts_zba.sail
++++ b/model/riscv_insts_zba.sail
+@@ -27,9 +27,15 @@ function clause execute (SLLIUW(shamt, rs1, rd)) = {
+ /* ****************************************************************** */
+ union clause instruction = ZBA_RTYPEUW : (regidx, regidx, regidx, shamt_zba)
+ 
++// add.uw
++mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, 0b00)
++  <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ 0b00 @ 0b0 @ encdec_reg(rd) @ 0b0111011
++  when currentlyEnabled(Ext_Zba) & xlen == 64
++
++// sh#add.uw
+ mapping clause encdec = ZBA_RTYPEUW(rs2, rs1, rd, shamt)
+-  <-> 0b0000100 @ encdec_reg(rs2) @ encdec_reg(rs1) @ shamt @ 0b0 @ encdec_reg(rd) @ 0b0111011
+-  when currentlyEnabled(Ext_Zba) & xlen == 64
++  <-> 0b0010000 @ encdec_reg(rs2) @ encdec_reg(rs1) @ shamt @ 0b0 @ encdec_reg(rd) @ 0b0111011
++  when currentlyEnabled(Ext_Zba) & xlen == 64 & shamt != 0b00
+ 
+ mapping zba_rtypeuw_mnemonic : shamt_zba <-> string = {
+   0b00 <-> "add.uw",
+-- 
+2.56.0

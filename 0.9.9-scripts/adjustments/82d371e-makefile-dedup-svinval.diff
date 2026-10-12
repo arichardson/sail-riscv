@@ -1,0 +1,12 @@
+diff --git a/Makefile b/Makefile
+index b78bbb41..60f4a1b9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -45,7 +45,6 @@ SAIL_DEFAULT_INST = $(SAIL_RISCV_MODEL_DIR)/riscv_insts_base.sail \
+                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zbb.sail \
+                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zbc.sail \
+                     $(SAIL_RISCV_MODEL_DIR)/riscv_insts_zbs.sail \
+-                    $(SAIL_RISCV_MODEL_DIR)/riscv_insts_svinval.sail \
+                     $(SAIL_CHERI_MODEL_DIR)/cheri_insts_begin.sail \
+                     $(SAIL_CHERI_MODEL_DIR)/cheri_insts.sail \
+                     $(SAIL_CHERI_MODEL_DIR)/cheri_insts_cext.sail \

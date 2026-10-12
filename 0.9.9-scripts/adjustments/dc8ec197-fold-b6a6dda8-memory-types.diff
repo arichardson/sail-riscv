@@ -1,0 +1,22 @@
+diff --git a/model/riscv_mem.sail b/model/riscv_mem.sail
+index 51bd4d3f..22c3f292 100644
+--- a/model/riscv_mem.sail
++++ b/model/riscv_mem.sail
+@@ -74,7 +74,7 @@ function phys_mem_read forall 'n, 0 < 'n <= max_mem_access . (t : AccessType(ext
+     Some(rk) => Some(read_ram(rk, paddr, width, meta)),
+     None()   => None()
+   }) : option((bits(8 * 'n), mem_meta));
+-  let result : option((bits(8 * 'n), mem_meta)) = if platform_get_rvfi_dii() & out_of_rvfi_dii_range(paddr, width) then None() else result;
++  let result : option((bits(8 * 'n), mem_meta)) = if platform_get_rvfi_dii() & out_of_rvfi_dii_range(physaddr_bits(paddr), width) then None() else result;
+   match (t, result) {
+     (Execute(),  None()) => Err(E_Fetch_Access_Fault()),
+     (Read(Data), None()) => Err(E_Load_Access_Fault()),
+@@ -252,7 +252,7 @@ function mem_write_ea (addr, width, aq, rl, con) =
+ 
+ // only used for actual memory regions, to avoid MMIO effects
+ function phys_mem_write forall 'n, 0 < 'n <= max_mem_access . (wk : write_kind, paddr : physaddr, width : int('n), data : bits(8 * 'n), meta : mem_meta) -> MemoryOpResult(bool) = {
+-  if platform_get_rvfi_dii() & out_of_rvfi_dii_range(paddr, width)
++  if platform_get_rvfi_dii() & out_of_rvfi_dii_range(physaddr_bits(paddr), width)
+   then Err(E_SAMO_Access_Fault())
+   else {
+     let result = write_ram(wk, paddr, width, data, meta);

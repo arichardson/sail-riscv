@@ -1,0 +1,40 @@
+From e12e71a978cdac9d2cc1b9e1357f0df89bbb7cc4 Mon Sep 17 00:00:00 2001
+From: Alex Richardson <alexrichardson@google.com>
+Date: Mon, 5 Oct 2026 12:41:27 -0700
+Subject: [PATCH] Fix RV32 build with the new CHERI exception codes
+
+The CHERI exception codes 32-36 do not fit in range(0, xlen - 1) on RV32.
+---
+ model/cheri/cheri_riscv_types.sail | 2 +-
+ model/riscv_types.sail             | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/model/cheri/cheri_riscv_types.sail b/model/cheri/cheri_riscv_types.sail
+index f7300718eb73e08bcbfee581d94086395dc374d7..9130ad5dcace2852bc00654ed5da6e6165337083 100644
+--- a/model/cheri/cheri_riscv_types.sail
++++ b/model/cheri/cheri_riscv_types.sail
+@@ -63,7 +63,7 @@ function ext_exc_type_of_bits(e) =
+   }
+ 
+ /* CHERI conversion of extension exceptions to integers */
+-val num_of_ext_exc_type : ext_exc_type -> range(0, xlen - 1)
++val num_of_ext_exc_type : ext_exc_type -> range(0, 63)
+ function num_of_ext_exc_type(e) =
+   match e {
+     EXC_CHERI(CapCheckType_Inst()) => 32,
+diff --git a/model/riscv_types.sail b/model/riscv_types.sail
+index 888b51994767a28d6c32e54a9e0b54c1f828de0b..c8d2ace302f81ff9906a9afec504a8d53de30036 100644
+--- a/model/riscv_types.sail
++++ b/model/riscv_types.sail
+@@ -239,7 +239,7 @@ function exceptionType_of_bits(e) =
+     _ => E_Extension(ext_exc_type_of_bits(e))
+   }
+ 
+-val num_of_ExceptionType : ExceptionType -> {'n, (0 <= 'n < xlen). int('n)}
++val num_of_ExceptionType : ExceptionType -> {'n, (0 <= 'n < 64). int('n)}
+ function num_of_ExceptionType(e) =
+   match (e) {
+     E_Fetch_Addr_Align()   => 0,
+-- 
+2.56.0.rc1.315.gc6ed9934b7-goog
+

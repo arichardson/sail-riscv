@@ -1,0 +1,13 @@
+diff --git a/model/cheri/cheri_sys_regs.sail b/model/cheri/cheri_sys_regs.sail
+index 371c9c853f0bad7c8ea1a53ae713514490ddfcf4..ca04b419d7ca27b6b92b118dd68f447ba9ddeda4 100644
+--- a/model/cheri/cheri_sys_regs.sail
++++ b/model/cheri/cheri_sys_regs.sail
+@@ -46,7 +46,7 @@ function cheri_registers_enabled () -> bool = {
+   if debug_mode_active then return true;
+   // Y logic described in CHERI spec
+   misa[Y] == 0b1
+-    & feature_enabled_for_priv(cur_privilege(), menvcfg[Y], senvcfg[Y])
++    & feature_enabled_for_priv(cur_privilege(), menvcfg[Y][0], senvcfg[Y][0])
+ }
+ 
+ function haveZstid () -> bool = true

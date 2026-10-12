@@ -1,0 +1,104 @@
+diff --git a/model/CMakeLists.txt b/model/CMakeLists.txt
+index 73a3519f..010dc385 100644
+--- a/model/CMakeLists.txt
++++ b/model/CMakeLists.txt
+@@ -108,11 +108,9 @@ foreach (xlen IN ITEMS 32 64)
+                 "riscv_insts_begin.sail"
+                 ${sail_seq_inst}
+                 "riscv_insts_end.sail"
++                "cheri/cheri_csr_ext.sail"
++                "riscv_csr_end.sail"
+             )
+-            if (variant STREQUAL "rvfi")
+-                list(APPEND sail_seq_inst_srcs "cheri/cheri_csr_ext.sail")
+-            endif()
+-            list(APPEND sail_seq_inst_srcs "riscv_csr_end.sail")
+ 
+             set(sail_sys_srcs
+                 "riscv_vext_control.sail"
+@@ -163,6 +161,8 @@ foreach (xlen IN ITEMS 32 64)
+ 
+             if (variant STREQUAL "rvfi")
+                 list(APPEND prelude "rvfi_dii.sail")
++            else()
++                list(APPEND prelude "riscv_rvfi_stub.sail")
+             endif()
+ 
+             set(sail_regs_srcs
+@@ -207,7 +207,7 @@ foreach (xlen IN ITEMS 32 64)
+                 set(riscv_step_ext "cheri/cheri_step_ext.sail" "riscv_step_rvfi.sail")
+                 set(riscv_fetch "riscv_fetch_rvfi.sail")
+             else()
+-                set(riscv_step_ext "cheri/cheri_step_ext.sail" "cheri/cheri_step_ext_nonrvfi.sail")
++                set(riscv_step_ext "cheri/cheri_step_ext.sail")
+                 set(riscv_fetch "riscv_fetch.sail")
+             endif()
+ 
+@@ -217,6 +217,8 @@ foreach (xlen IN ITEMS 32 64)
+                 "cheri/cheri_decode_ext.sail"
+                 ${riscv_fetch}
+                 "riscv_step.sail"
++                "cheri/test_main_ext.sail"
++                "test_main.sail"
+             )
+ 
+             if (variant STREQUAL "coq")
+@@ -283,6 +285,7 @@ foreach (xlen IN ITEMS 32 64)
+                         --c-preserve step
+                         --c-preserve tick_clock
+                         --c-preserve tick_platform
++                        --c-preserve test_main
+                         # Preserve RVFI functions.
+                         --c-preserve rvfi_set_instr_packet
+                         --c-preserve rvfi_get_cmd
+diff --git a/model/cheri/cheri_step_ext_nonrvfi.sail b/model/cheri/cheri_step_ext_nonrvfi.sail
+deleted file mode 100644
+index de374784..00000000
+--- a/model/cheri/cheri_step_ext_nonrvfi.sail
++++ /dev/null
+@@ -1,19 +0,0 @@
+-/*=======================================================================================*/
+-/*  This Sail RISC-V architecture model, comprising all files and                        */
+-/*  directories except where otherwise noted is subject the BSD                          */
+-/*  two-clause license in the LICENSE file.                                              */
+-/*                                                                                       */
+-/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+-/*=======================================================================================*/
+-
+-// The split repository (rvy-sail-cheri-riscv) could only build the RVFI simulator between
+-// "Fixes for running with TestRIG" and "Re-enable self tests". These definitions keep the
+-// non-RVFI build of the merged repository working in the meantime; "Re-enable self tests"
+-// removes the step hooks and this file.
+-
+-function ext_fetch_hook(f : FetchResult) -> FetchResult = f
+-
+-function ext_pre_step_hook()  -> unit = ()
+-function ext_post_step_hook() -> unit = ()
+-
+-function ext_reset() -> unit = ()
+diff --git a/Makefile b/Makefile
+index 26798e77..2ee811d7 100644
+--- a/Makefile
++++ b/Makefile
+@@ -159,11 +159,10 @@ SAIL_ARCH_RVFI_SRCS = \
+ 
+ SAIL_STEP_SRCS = $(SAIL_RISCV_MODEL_DIR)/riscv_step_common.sail \
+                  $(SAIL_CHERI_MODEL_DIR)/cheri_step_ext.sail \
+-                 $(SAIL_CHERI_MODEL_DIR)/cheri_step_ext_nonrvfi.sail \
+                  $(SAIL_CHERI_MODEL_DIR)/cheri_decode_ext.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/riscv_fetch.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/riscv_step.sail \
+-                 src/test_main_ext.sail \
++                 $(SAIL_CHERI_MODEL_DIR)/test_main_ext.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/test_main.sail
+ 
+ RVFI_STEP_SRCS = $(SAIL_RISCV_MODEL_DIR)/riscv_step_common.sail \
+@@ -172,7 +171,7 @@ RVFI_STEP_SRCS = $(SAIL_RISCV_MODEL_DIR)/riscv_step_common.sail \
+                  $(SAIL_CHERI_MODEL_DIR)/cheri_decode_ext.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/riscv_fetch_rvfi.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/riscv_step.sail \
+-                 src/test_main_ext.sail \
++                 $(SAIL_CHERI_MODEL_DIR)/test_main_ext.sail \
+                  $(SAIL_RISCV_MODEL_DIR)/test_main.sail
+ 
+ # Control inclusion of 64-bit only riscv_analysis

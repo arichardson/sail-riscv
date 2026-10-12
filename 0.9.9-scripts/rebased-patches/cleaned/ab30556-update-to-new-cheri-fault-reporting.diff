@@ -1,0 +1,40 @@
+diff --git a/model/cheri/test_main_ext.sail b/model/cheri/test_main_ext.sail
+index 2f83153c751358e77af92aa98a22392ba3380d62..bedab1ecb4144aa197892cbd91e65c4bb31616f6 100644
+--- a/model/cheri/test_main_ext.sail
++++ b/model/cheri/test_main_ext.sail
+@@ -616,7 +616,7 @@ function test_cheri_bad_jump() -> unit = {
+     // Subsequent fetch should succeed
+     tick_pc();
+     assert(PCC.tag);
+-    assert(match fetch() { F_Ext_Error(_) => false, _ => true });
++    assert(fetch() != F_Ext_Error());
+ 
+     // Out-of-bounds cap jump
+     // Jump itself should retire
+@@ -652,7 +652,7 @@ function test_cheri_bad_jump() -> unit = {
+     tick_pc();
+     assert(PCC.tag);
+     assert(not(PCC.sealed));
+-    assert(match fetch() { F_Ext_Error(_) => false, _ => true });
++    assert(fetch() != F_Ext_Error());
+ 
+     PCC = infinite_cap;
+     // Jump to sealed cap (non-zero imm) should leave PCC sealed
+@@ -661,7 +661,7 @@ function test_cheri_bad_jump() -> unit = {
+     tick_pc();
+     assert(not(PCC.tag));
+     assert(PCC.sealed);
+-    assert(fetch() == F_Ext_Error(CapEx_SealViolation));
++    assert(fetch() == F_Ext_Error());
+ 
+     PCC = infinite_cap;
+     // Jump to odd address sealed cap (any imm) should leave PCC sealed
+@@ -671,7 +671,7 @@ function test_cheri_bad_jump() -> unit = {
+     tick_pc();
+     assert(not(PCC.tag));
+     assert(PCC.sealed);
+-    assert(fetch() == F_Ext_Error(CapEx_SealViolation));
++    assert(fetch() == F_Ext_Error());
+ }
+ 
+ function test_main_ext() -> unit = {

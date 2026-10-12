@@ -1,0 +1,127 @@
+diff --git a/model/riscv_insts_zbb.sail b/model/riscv_insts_zbb.sail
+index 74190b1b..a425dc67 100644
+--- a/model/riscv_insts_zbb.sail
++++ b/model/riscv_insts_zbb.sail
+@@ -7,7 +7,7 @@
+ /*=======================================================================================*/
+ 
+ function clause extensionEnabled(Ext_Zbb) = true | extensionEnabled(Ext_B)
+-function clause extensionEnabled(Ext_Zbkb) = true
++function clause extensionEnabled(Ext_Zbkb) = false
+ 
+ /* ****************************************************************** */
+ union clause ast = RISCV_RORIW : (bits(5), regidx, regidx)
+diff --git a/model/riscv_insts_zbc.sail b/model/riscv_insts_zbc.sail
+index b113cef0..cdd50140 100644
+--- a/model/riscv_insts_zbc.sail
++++ b/model/riscv_insts_zbc.sail
+@@ -7,7 +7,7 @@
+ /*=======================================================================================*/
+ 
+ function clause extensionEnabled(Ext_Zbc) = true
+-function clause extensionEnabled(Ext_Zbkc) = true
++function clause extensionEnabled(Ext_Zbkc) = false
+ 
+ /* ****************************************************************** */
+ union clause ast = RISCV_CLMUL : (regidx, regidx, regidx)
+diff --git a/model/riscv_insts_zbkx.sail b/model/riscv_insts_zbkx.sail
+index 78a6c1ac..c4ed8ded 100644
+--- a/model/riscv_insts_zbkx.sail
++++ b/model/riscv_insts_zbkx.sail
+@@ -6,7 +6,7 @@
+ /*  SPDX-License-Identifier: BSD-2-Clause                                                */
+ /*=======================================================================================*/
+ 
+-function clause extensionEnabled(Ext_Zbkx) = true
++function clause extensionEnabled(Ext_Zbkx) = false
+ 
+ /* ****************************************************************** */
+ union clause ast = RISCV_XPERM8 : (regidx, regidx, regidx)
+diff --git a/model/riscv_insts_zfa.sail b/model/riscv_insts_zfa.sail
+index b846353e..e10b6f23 100644
+--- a/model/riscv_insts_zfa.sail
++++ b/model/riscv_insts_zfa.sail
+@@ -6,7 +6,7 @@
+ /*  SPDX-License-Identifier: BSD-2-Clause                                                */
+ /*=======================================================================================*/
+ 
+-function clause extensionEnabled(Ext_Zfa) = true
++function clause extensionEnabled(Ext_Zfa) = false
+ 
+ /* FLI.H */
+ 
+diff --git a/model/riscv_insts_zicond.sail b/model/riscv_insts_zicond.sail
+index 1165ca35..d8af90a2 100644
+--- a/model/riscv_insts_zicond.sail
++++ b/model/riscv_insts_zicond.sail
+@@ -6,7 +6,7 @@
+ /*  SPDX-License-Identifier: BSD-2-Clause                                                */
+ /*=======================================================================================*/
+ 
+-function clause extensionEnabled(Ext_Zicond) = true
++function clause extensionEnabled(Ext_Zicond) = false
+ 
+ union clause ast = ZICOND_RTYPE : (regidx, regidx, regidx, zicondop)
+ 
+diff --git a/model/riscv_insts_zkn.sail b/model/riscv_insts_zkn.sail
+index 52939b74..69d472ab 100644
+--- a/model/riscv_insts_zkn.sail
++++ b/model/riscv_insts_zkn.sail
+@@ -11,7 +11,7 @@
+  * ----------------------------------------------------------------------
+  */
+ 
+-function clause extensionEnabled(Ext_Zknh) = true
++function clause extensionEnabled(Ext_Zknh) = false
+ 
+ union clause ast = SHA256SIG0 : (regidx, regidx)
+ union clause ast = SHA256SIG1 : (regidx, regidx)
+@@ -75,7 +75,7 @@ function clause execute (SHA256SUM1(rs1, rd)) = {
+  * ----------------------------------------------------------------------
+  */
+ 
+-function clause extensionEnabled(Ext_Zkne) = true
++function clause extensionEnabled(Ext_Zkne) = false
+ 
+ union clause ast = AES32ESMI : (bits(2), regidx, regidx, regidx)
+ 
+@@ -117,7 +117,7 @@ function clause execute (AES32ESI (bs, rs2, rs1, rd)) = {
+  * ----------------------------------------------------------------------
+  */
+ 
+-function clause extensionEnabled(Ext_Zknd) = true
++function clause extensionEnabled(Ext_Zknd) = false
+ 
+ union clause ast = AES32DSMI : (bits(2), regidx, regidx, regidx)
+ 
+diff --git a/model/riscv_insts_zks.sail b/model/riscv_insts_zks.sail
+index 08c6d601..678f704c 100644
+--- a/model/riscv_insts_zks.sail
++++ b/model/riscv_insts_zks.sail
+@@ -11,7 +11,7 @@
+  * ----------------------------------------------------------------------
+  */
+ 
+-function clause extensionEnabled(Ext_Zksh) = true
++function clause extensionEnabled(Ext_Zksh) = false
+ 
+ union clause ast = SM3P0 : (regidx, regidx)
+ union clause ast = SM3P1 : (regidx, regidx)
+@@ -47,7 +47,7 @@ function clause execute (SM3P1(rs1, rd)) = {
+  * ----------------------------------------------------------------------
+  */
+ 
+-function clause extensionEnabled(Ext_Zksed) = true
++function clause extensionEnabled(Ext_Zksed) = false
+ 
+ union clause ast = SM4ED : (bits(2), regidx, regidx, regidx)
+ union clause ast = SM4KS : (bits(2), regidx, regidx, regidx)
+diff --git a/c_emulator/riscv_platform.cpp b/c_emulator/riscv_platform.cpp
+--- a/c_emulator/riscv_platform.cpp
++++ b/c_emulator/riscv_platform.cpp
+@@ -400,5 +400,5 @@ bool sys_misa_x(unit u)
+ mach_bits sys_pa_bits(unit u)
+ {
+-  return (zxlen_val == 32) ? 34 : 56;
++  return (zxlen_val == 32) ? 34 : 39;
+ }

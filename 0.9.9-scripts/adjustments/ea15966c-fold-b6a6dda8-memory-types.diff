@@ -1,0 +1,56 @@
+diff --git a/model/riscv_mem.sail b/model/riscv_mem.sail
+index 8f9186d3..d6b4f43f 100644
+--- a/model/riscv_mem.sail
++++ b/model/riscv_mem.sail
+@@ -199,11 +199,11 @@ function rvfi_read (addr, width, result) = {
+   rvfi_mem_data_present = true;
+   match result {
+     /* TODO: report tag bit for capability writes and extend mask by one bit. */
+-    MemValue(v, _) => if width <= 16
+-                       then { rvfi_mem_data[rvfi_mem_rdata] = sail_zero_extend(v, 256);
+-                              rvfi_mem_data[rvfi_mem_rmask] = rvfi_encode_width_mask(width) }
+-                       else { internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!") },
+-    MemException(_) => ()
++    Ok(v, _) => if width <= 16
++               then { rvfi_mem_data[rvfi_mem_rdata] = sail_zero_extend(v, 256);
++                      rvfi_mem_data[rvfi_mem_rmask] = rvfi_encode_width_mask(width) }
++               else { internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!") },
++    Err(_) => ()
+   };
+ }
+ $else
+@@ -241,7 +241,7 @@ function checked_mem_read forall 'n, 0 < 'n <= max_mem_access . (
+         }
+       },
+     };
+-  rvfi_read(paddr, width, result);
++  rvfi_read(physaddr_bits(paddr), width, result);
+   result
+ }
+ 
+@@ -280,14 +280,14 @@ function rvfi_write (addr, width, value, meta, result) = {
+   rvfi_mem_data_present = true;
+   match result {
+     /* Log only the memory address (without the value) if the write fails. */
+-    MemValue(_) => if width <= 16 then {
++    Ok(_) => if width <= 16 then {
+         /* TODO: report tag bit for capability writes and extend mask by one bit. */
+         rvfi_mem_data[rvfi_mem_wdata] = sail_zero_extend(value,256);
+         rvfi_mem_data[rvfi_mem_wmask] = rvfi_encode_width_mask(width);
+       } else {
+         internal_error(__FILE__, __LINE__, "Expected at most 16 bytes here!");
+       },
+-    MemException(_) => ()
++    Err(_) => ()
+   }
+ }
+ $else
+@@ -337,7 +337,7 @@ function checked_mem_write forall 'n, 0 < 'n <= max_mem_access . (
+         }
+       }
+     };
+-  rvfi_write(paddr, width, data, meta, result);
++  rvfi_write(physaddr_bits(paddr), width, data, meta, result);
+   result
+ }
+ 

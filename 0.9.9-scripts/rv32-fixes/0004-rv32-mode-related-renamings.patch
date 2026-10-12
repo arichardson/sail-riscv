@@ -1,0 +1,25 @@
+From 350a335c01bb1cd00475e4f954a80a6b563bd94c Mon Sep 17 00:00:00 2001
+From: Alex Richardson <alexrichardson@google.com>
+Date: Mon, 5 Oct 2026 12:41:29 -0700
+Subject: [PATCH] Fix RV32 build after the Mode to PointerMode renaming
+
+---
+ model/cheri/cheri_prelude_64.sail | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/model/cheri/cheri_prelude_64.sail b/model/cheri/cheri_prelude_64.sail
+index 9f2a6f73047852265c8e2b9e6f97558cff1a6937..9e3350501d502646dfd9795d2ec97cd56203f28e 100644
+--- a/model/cheri/cheri_prelude_64.sail
++++ b/model/cheri/cheri_prelude_64.sail
+@@ -72,7 +72,7 @@ type CapAP_P = bits(5)
+ // checked for outside the function, and the null fields returned.
+ // Backwards match failures occur when encoding an unrepresentable combination of fields: this should be
+ // prevented by calling legalizeFields when changing the fields.
+-mapping ap_p_encdec : bits(cap_AP_P_width) <-> (ArchPerms, Mode) = {
++mapping ap_p_encdec : bits(cap_AP_P_width) <-> (ArchPerms, PointerMode) = {
+   // Quadrant 0: Non-capability data read/write
+   0b00 @ 0b000     <-> (struct{ R=false, W=false, C=false, LM=false, EL=false, SL=false, X=false, ASR=false }, pointer_mode_encdec(0b0)),
+   0b00 @ 0b001     <-> (struct{ R= true, W=false, C=false, LM=false, EL=false, SL=false, X=false, ASR=false }, pointer_mode_encdec(0b0)),
+-- 
+2.56.0.rc1.315.gc6ed9934b7-goog
+

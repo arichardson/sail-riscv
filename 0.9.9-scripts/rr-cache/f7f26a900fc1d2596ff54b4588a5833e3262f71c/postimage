@@ -1,0 +1,70 @@
+/*=======================================================================================*/
+/*  This Sail RISC-V architecture model, comprising all files and                        */
+/*  directories except where otherwise noted is subject the BSD                          */
+/*  two-clause license in the LICENSE file.                                              */
+/*                                                                                       */
+/*  SPDX-License-Identifier: BSD-2-Clause                                                */
+/*=======================================================================================*/
+
+function ext_reset_cheri() -> unit = {
+  PCC = root_cap;
+  nextPCC = root_cap;
+  ddc_y = root_cap;
+
+  // The address bits may have been initialised by the non-CHERI reset to a non-zero value.
+  stvec_y = {root_cap with address = stvec.bits};
+  sscratch_y = {sscratch_y with tag = false, address = sscratch} ;
+  sepc_y = root_cap;
+  mtid_y = {mtid_y with tag = false};
+  stid_y = {stid_y with tag = false};
+  utid_y = {utid_y with tag = false};
+
+  mtvec_y = {root_cap with address = mtvec.bits};
+  mscratch_y = {mscratch_y with tag = false, address = mscratch} ;
+  mepc_y = root_cap;
+
+  // dpcc = {dpcc with tag = false} ;
+  // dscratch0c = {dscratch0c with tag = false};
+  // dscratch1c = {dscratch1c with tag = false};
+  // dddc = {dddc with tag = false};
+  // drootc = root_cap;
+
+  // Canonicalize so that all partially decoded fields are consistent again.
+  foreach (i from 1 to 31) {
+    let r = Regno(i);
+    let c = rX_full(r);
+    wX_full(r, bitsToCap(false, capToMetadataBits(c) @ c.address));
+  };
+}
+
+function ext_reset() -> unit = {
+  ext_reset_cheri();
+  if get_config_rvfi() then ext_rvfi_reset();
+}
+
+function ext_reset_misa() -> unit = ()
+
+function ext_fetch_hook(f : FetchResult) -> FetchResult = f
+
+function ext_fetch_mem_read_hi(paddr : physaddr, pbmt : PBMT) -> MemoryOpResult(half) = mem_read(InstructionFetch(), pbmt, paddr, 2, false, false, false)
+function ext_fetch_mem_read_lo(paddr : physaddr, pbmt : PBMT) -> MemoryOpResult(half) = mem_read(InstructionFetch(), pbmt, paddr, 2, false, false, false)
+
+function ext_pre_step_hook()  -> unit = ()
+function ext_post_step_hook() -> unit = ()
+
+// Print an instruction we are executing. For CHERI we print the mode too.
+function ext_print_instr forall 'n, 'n in {16, 32} . (
+  step_no : int, instruction : instruction, opcode : bits('n)
+) -> unit = {
+  if get_config_print_instr()
+  then {
+    let cheri_mode : string = match effective_cheri_mode() {
+      CapPtrMode => "CapPtrMode",
+      IntPtrMode  => "Integer",
+    };
+    print_instr(
+      "[" ^ dec_str(step_no) ^ "] [" ^ to_str(cur_privilege()) ^ "," ^ cheri_mode ^ "]: " ^
+      BitStr(PC) ^ " (" ^ BitStr(opcode) ^ ") " ^ to_str(instruction)
+    );
+  };
+}

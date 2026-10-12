@@ -1,0 +1,24 @@
+diff --git a/model/riscv_inst_retire.sail b/model/riscv_inst_retire.sail
+index cbf51aa337171d21567b9e2aba04c642f69b166a..0d2acec643fa7ecfa08779deeec30f5f6df55271 100644
+--- a/model/riscv_inst_retire.sail
++++ b/model/riscv_inst_retire.sail
+@@ -26,7 +26,6 @@ union ExecutionResult = {
+   // Did not retire for custom reason.
+   Ext_CSR_Check_Failure          : ext_csr_exc_type,
+   Ext_DataAddr_Check_Failure     : ext_data_addr_error,
+-  Ext_XRET_Priv_Failure          : unit,
+ }
+ 
+ // To ease the introduction of `ExecutionResult`, this global
+diff --git a/model/riscv_step.sail b/model/riscv_step.sail
+index d3136d317f524cac6ff647af55f02cc2fb0c490c..c832c49401f78037d80335459aca2c0c505ec19f 100644
+--- a/model/riscv_step.sail
++++ b/model/riscv_step.sail
+@@ -204,7 +204,6 @@ function try_step(step_no : nat, exit_wait : bool) -> bool = {
+     // errors from extensions
+     Step_Execute(Ext_CSR_Check_Failure(fail_type), _) => ext_check_CSR_fail(fail_type),
+     Step_Execute(Ext_DataAddr_Check_Failure(e), _) => ext_handle_data_check_error(e),
+-    Step_Execute(Ext_XRET_Priv_Failure(), _) => ext_fail_xret_priv(),
+   };
+ 
+   match hart_state {

@@ -1,0 +1,57 @@
+diff --git a/model/cheri/cheri_insts.sail b/model/cheri/cheri_insts.sail
+index 7cf91d4d1ed53f88f452c931d53fb29d5f72afe9..2e570f3f2fc7c106aae322e4fe6ade744e4253e2 100644
+--- a/model/cheri/cheri_insts.sail
++++ b/model/cheri/cheri_insts.sail
+@@ -95,16 +95,14 @@ function clause execute(JALR_capmode(imm, cs1, cd)) = {
+   }
+ }
+ 
+-union clause ast = BEQ_reserved_capmode : (bits(13), regidx, regidx)
++union clause instruction = BEQ_reserved_capmode : (bits(13), regidx, regidx)
+ function clause execute(BEQ_reserved_capmode(_, _, _)) = {
+-  handle_illegal();
+-  RETIRE_FAIL
++  Illegal_Instruction()
+ }
+ 
+-union clause ast = BNE_reserved_capmode : (bits(13), regidx, regidx)
++union clause instruction = BNE_reserved_capmode : (bits(13), regidx, regidx)
+ function clause execute(BNE_reserved_capmode(_, _, _)) = {
+-  handle_illegal();
+-  RETIRE_FAIL
++  Illegal_Instruction()
+ }
+ 
+ /* Operations that extract parts of a capability into GPR */
+diff --git a/model/cheri/test_main_ext.sail b/model/cheri/test_main_ext.sail
+index cd82a6a91893c67c3a700fab5179c7a2619a6b55..ad8c28ce3d7ee00d0b7a7d5ae29394e77cc990b3 100644
+--- a/model/cheri/test_main_ext.sail
++++ b/model/cheri/test_main_ext.sail
+@@ -576,10 +576,10 @@ function test_cheri_pcc_mode(priv : Privilege, cheri_allowed : bool) -> unit = {
+ }
+ 
+ function test_cheri_reserved_branches() -> unit = {
+-    let instBitsBEQGood = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), RISCV_BEQ));
+-    let instBitsBEQBad = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), RISCV_BEQ));
+-    let instBitsBNEGood = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), RISCV_BNE));
+-    let instBitsBNEBad = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), RISCV_BNE));
++    let instBitsBEQGood = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), BEQ));
++    let instBitsBEQBad = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), BEQ));
++    let instBitsBNEGood = encdec(BTYPE(zeros(), Regidx(0b00010), Regidx(0b00001), BNE));
++    let instBitsBNEBad = encdec(BTYPE(zeros(), Regidx(0b00001), Regidx(0b00010), BNE));
+     // Check that integer mode works with all branches
+     PCC = {setCapMode(PCC, IntPtrMode)};
+     let ast = ext_decode(instBitsBEQGood);
+@@ -598,10 +598,10 @@ function test_cheri_reserved_branches() -> unit = {
+     assert(execute(ast) == RETIRE_SUCCESS);
+     // Check that cap mode bans the "bad" instructions
+     let ast = ext_decode(instBitsBEQBad);
+-    assert(execute(ast) == RETIRE_FAIL);
++    assert(execute_test(ast) == RETIRE_FAIL);
+     assert(mcause[Cause] == zero_extend(exceptionType_to_bits(E_Illegal_Instr())));
+     let ast = ext_decode(instBitsBNEBad);
+-    assert(execute(ast) == RETIRE_FAIL);
++    assert(execute_test(ast) == RETIRE_FAIL);
+     assert(mcause[Cause] == zero_extend(exceptionType_to_bits(E_Illegal_Instr())));
+ }
+ 
