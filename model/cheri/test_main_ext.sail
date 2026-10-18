@@ -590,6 +590,11 @@ function test_cheri_feature_enables(priv : Privilege, cheri_allowed : bool, expe
     let backupPCC = PCC;
     assert(effective_cheri_mode() == expected_mode);
     let ddcAddr = csr_name_map("ddc");
+    let tidAddr : csreg = match priv {
+      Machine => csr_name_map("mtid"),
+      Supervisor => csr_name_map("stid"),
+      User => csr_name_map("utid"),
+    };
     let resR : regidx = Regidx(0b00001);
     // Capmode has expected tag-preserving behaviour
     let auipcEnc = encdec(UTYPE(0x00000, resR, AUIPC));
@@ -598,6 +603,10 @@ function test_cheri_feature_enables(priv : Privilege, cheri_allowed : bool, expe
     // Can access YLEN-width CSRs iff not prevented by some cre
     assert(execute_test(CSRReg(ddcAddr, resR, resR, CSRRW)) == (if cheri_allowed then RETIRE_SUCCESS else RETIRE_FAIL));
     if not(cheri_allowed) then assert_illegal_cause();
+    // Restore things, as above might have trapped!
+    PCC = backupPCC;
+    set_cur_privilege(priv);
+    assert(execute_test(CSRReg(tidAddr, resR, resR, CSRRW)) == (if cheri_allowed then RETIRE_SUCCESS else RETIRE_FAIL));
     // Restore things, as above might have trapped!
     PCC = backupPCC;
     set_cur_privilege(priv);
