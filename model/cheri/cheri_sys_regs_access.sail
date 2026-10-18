@@ -130,37 +130,37 @@ function set_ddc_xlen(value : xlenbits) -> unit = {
   ddc = setCapCSRAddr(ddc, convertInvalidAddr(value));
 }
 
-/******************************* xTID *******************************/
+/******************************* xTIDC *******************************/
 
 function is_zstid_csr (csrno : bits(12)) -> bool =
-  csr_name_map(csrno) == "mtid" | csr_name_map(csrno) == "stid" | csr_name_map(csrno) == "utid"
+  csr_name_map(csrno) == "mtidc" | csr_name_map(csrno) == "stidc" | csr_name_map(csrno) == "utidc"
 
-function get_mtid() -> xlenbits = mtid_y.address
-function get_stid() -> xlenbits = stid_y.address
-function get_utid() -> xlenbits = utid_y.address
+function get_mtidc_xlen() -> xlenbits = mtidc.address
+function get_stidc_xlen() -> xlenbits = stidc.address
+function get_utidc_xlen() -> xlenbits = utidc.address
 
-function set_mtid_y(value : Capability) -> unit = {
-  mtid_y = value;
+function set_mtidc(value : Capability) -> unit = {
+  mtidc = value;
 }
 
-function set_stid_y(value : Capability) -> unit = {
-  stid_y = value;
+function set_stidc(value : Capability) -> unit = {
+  stidc = value;
 }
 
-function set_utid_y(value : Capability) -> unit = {
-  utid_y = value;
+function set_utidc(value : Capability) -> unit = {
+  utidc = value;
 }
 
-function set_mtid(value : xlenbits) -> unit = {
-  mtid_y = setCapAddrChecked(mtid_y, value, false);
+function set_mtidc_xlen(value : xlenbits) -> unit = {
+  mtidc = setCapAddrChecked(mtidc, value, false);
 }
 
-function set_stid(value : xlenbits) -> unit = {
-  stid_y = setCapAddrChecked(stid_y, value, false);
+function set_stidc_xlen(value : xlenbits) -> unit = {
+  stidc = setCapAddrChecked(stidc, value, false);
 }
 
-function set_utid(value : xlenbits) -> unit = {
-  utid_y = setCapAddrChecked(utid_y, value, false);
+function set_utidc_xlen(value : xlenbits) -> unit = {
+  utidc = setCapAddrChecked(utidc, value, false);
 }
 
 /******************************* xenvcfg *******************************/

@@ -20,9 +20,9 @@ register ddc       : Capability
 register stvec_y    : Capability
 register sscratch_y : Capability = null_cap
 register sepc_y     : Capability
-register mtid_y     : Capability = null_cap
-register stid_y     : Capability = null_cap
-register utid_y     : Capability = null_cap
+register mtidc      : Capability = null_cap
+register stidc      : Capability = null_cap
+register utidc      : Capability = null_cap
 register mtvec_y    : Capability
 register mscratch_y : Capability = null_cap
 register mepc_y     : Capability

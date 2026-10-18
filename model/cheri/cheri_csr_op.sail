@@ -20,12 +20,12 @@ function csr_type(csr : csreg) -> CSRLen = match csr {
   0x140 => YlenExtended, // sscratch
   0x141 => YlenExtended, // sepc
 
-  0x780 => YlenNew, // mtid
-  0x580 => YlenNew, // stid
-  0x480 => YlenNew, // utid
+  0x780 => YlenNew, // mtidc
+  0x580 => YlenNew, // stidc
+  0x480 => YlenNew, // utidc
 
   0x7bc => YlenNew, // dddc
-  0x7bd => YlenNew, // dinfc
+  0x7bd => YlenNew, // drootc
 
   0x416 => YlenNew, // ddc
 
@@ -57,9 +57,9 @@ function write_ylen_csr(csr : csreg, value : Capability) -> unit = {
 
     0x416 => {set_ddc(value); ddc},
 
-    0x780 => {set_mtid_y(value); mtid_y},
-    0x580 => {set_stid_y(value); stid_y},
-    0x480 => {set_utid_y(value); utid_y},
+    0x780 => {set_mtidc(value); mtidc},
+    0x580 => {set_stidc(value); stidc},
+    0x480 => {set_utidc(value); utidc},
 
     _ => internal_error(__FILE__, __LINE__, "write_ylen_csr for XLEN CSR; this should not be possible"),
   };
@@ -86,9 +86,9 @@ function write_ylen_csr_with_xlen(csr : csreg, value : xlenbits) -> unit = {
 
     0x416 => {set_ddc_xlen(value); ddc},
 
-    0x780 => {set_mtid(value); mtid_y},
-    0x580 => {set_stid(value); stid_y},
-    0x480 => {set_utid(value); utid_y},
+    0x780 => {set_mtidc_xlen(value); mtidc},
+    0x580 => {set_stidc_xlen(value); stidc},
+    0x480 => {set_utidc_xlen(value); utidc},
 
     _ => internal_error(__FILE__, __LINE__, "write_ylen_csr_with_xlen for XLEN CSR; this should not be possible"),
   };
@@ -114,9 +114,9 @@ function read_ylen_csr(csr : csreg, write_val : Capability) -> Capability = matc
 
   0x416 => ddc,
 
-  0x780 => mtid_y,
-  0x580 => stid_y,
-  0x480 => utid_y,
+  0x780 => mtidc,
+  0x580 => stidc,
+  0x480 => utidc,
 
   _ => internal_error(__FILE__, __LINE__, "read_ylen_csr for XLEN CSR; this should not be possible"),
 }
