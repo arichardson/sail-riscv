@@ -52,8 +52,6 @@ function cheri_registers_enabled () -> bool = {
     & feature_enabled_for_priv(cur_privilege(), menvcfg[Y][0], senvcfg[Y][0])
 }
 
-function haveZstid () -> bool = true
-
 /*
  * Used during readout (but not assignment!) of ?EPC registers (csrrw,
  * handle_trap_extension) and not during control transfer
