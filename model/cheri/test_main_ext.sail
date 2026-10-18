@@ -425,9 +425,9 @@ function test_cheri_csr_access_control() -> unit = {
     //              CSR        , minPriv   , ro   , needsAsrWrite, needsAsrRead
     // Completely new registers added by CHERI
     test_csr_access("ddc"      , User      , false, false, false);
-    test_csr_access("mtid"     , Machine   , false, true , false);
-    test_csr_access("stid"     , Supervisor, false, true , false);
-    test_csr_access("utid"     , User      , false, true , false);
+    test_csr_access("mtidc"    , Machine   , false, true , false);
+    test_csr_access("stidc"    , Supervisor, false, true , false);
+    test_csr_access("utidc"    , User      , false, true , false);
     // Some exception-related registers
     test_csr_access("mtvec"    , Machine   , false, true , true);
     test_csr_access("mepc"     , Machine   , false, true , true);
@@ -591,9 +591,9 @@ function test_cheri_feature_enables(priv : Privilege, cheri_allowed : bool, expe
     assert(effective_cheri_mode() == expected_mode);
     let ddcAddr = csr_name_map("ddc");
     let tidAddr : csreg = match priv {
-      Machine => csr_name_map("mtid"),
-      Supervisor => csr_name_map("stid"),
-      User => csr_name_map("utid"),
+      Machine => csr_name_map("mtidc"),
+      Supervisor => csr_name_map("stidc"),
+      User => csr_name_map("utidc"),
     };
     let resR : regidx = Regidx(0b00001);
     // Capmode has expected tag-preserving behaviour

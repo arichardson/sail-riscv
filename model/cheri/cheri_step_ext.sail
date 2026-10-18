@@ -15,9 +15,9 @@ function ext_reset_cheri() -> unit = {
   stvec_y = {root_cap with address = stvec.bits};
   sscratch_y = {sscratch_y with tag = false, address = sscratch} ;
   sepc_y = root_cap;
-  mtid_y = {mtid_y with tag = false};
-  stid_y = {stid_y with tag = false};
-  utid_y = {utid_y with tag = false};
+  mtidc = {mtidc with tag = false};
+  stidc = {stidc with tag = false};
+  utidc = {utidc with tag = false};
 
   mtvec_y = {root_cap with address = mtvec.bits};
   mscratch_y = {mscratch_y with tag = false, address = mscratch} ;
